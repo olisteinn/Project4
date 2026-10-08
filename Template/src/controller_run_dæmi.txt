@@ -1,0 +1,39 @@
+#include "P_controller.h"
+#include "PI_controller.h"
+#include "encoder.h"
+#include "drive.h"
+
+//setja "-<*controller_run_dæmi.txt>" í build_src_filter í platformio.ini
+
+Encoder motor(D2,D4,D7); // encoder driver, (encoder in 1, encoder in 2, signal read out)
+Drive bridge(0,D8); // motor driver, (timer circuit no., slp pin)
+P_controller Pctrl(5.5); 
+PI_controller PIctrl(3.2,2.5); //Gerir object fyrir báða controller tegundir
+controller* ctrl = &PIctrl; // Hérna veluru á milli þeirra, = &PIctrl vs. &Pctrl
+
+ISR(INT0_vect) {  // D2 interrupt, INT0 activated by digital_in through encoder class
+  motor.update(); // reads position and timestamps on encoder in pin interrupt
+}
+
+int main() {
+  time_init(); // initalize timer 1 for time tracking use
+  motor.init();  // initalize encoder
+  bridge.init();  // initalize motor driver
+  set_loop_ms(5,0);
+
+  sei();
+  int16_t target_speed = -10000;
+  int16_t ctrlOP = 0;
+
+  while (1) {
+    if (loop1 == true) {
+      loop1 = false;
+      ctrlOP = ctrl->update(target_speed,motor.speed()); // ctrlOP = controller output, int16_t 
+      bridge.run(ctrlOP); // .run(int16_t) les signed 16 bit on þýðir:
+      [-1,-32768] í .rev([0,255]) og [1,32767] í .fwd([0,255])
+    }
+  }
+
+  bridge.sleep(); // sets pwm to 0 and slp pin low
+  return 0;
+}

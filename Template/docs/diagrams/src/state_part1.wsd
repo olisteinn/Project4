@@ -1,0 +1,28 @@
+@startuml state_machine
+skinparam defaultTextAlignment center
+skinparam ArrowColor #333333
+skinparam StateBackgroundColor LightSkyBlue
+skinparam StateBorderColor Navy
+skinparam Padding 15
+
+
+[*] --> Initialization
+
+state Initialization {
+Initialization : entry / initialize parameters
+Initialization : exit / send Boot-up message
+}
+
+state Operational {
+Operational : entry / LED on, wake motor driver
+Operational : do / run speed controller
+Operational : exit / stop motor, LED off
+}
+
+' Main flow
+Initialization --> Operational : operate ('o')
+
+' Reset path
+Operational -up-> Initialization : reset ('r')
+
+@enduml

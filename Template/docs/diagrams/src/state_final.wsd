@@ -1,0 +1,46 @@
+@startuml state_machine
+skinparam defaultTextAlignment center
+skinparam ArrowColor #333333
+skinparam StateBackgroundColor LightSkyBlue
+skinparam StateBorderColor Navy
+skinparam Padding 15
+
+[*] --> Initialization
+
+state Initialization {
+Initialization : entry / Reset all states
+Initialization : exit / ?
+}
+state PreOperational {
+PreOperational : entry / Prompt operational inputs
+PreOperational : exit / Set operational inputs
+}
+
+state Operational {
+Operational : entry / Set motor
+Operational : exit / Stop motor
+}
+
+state Stopped {
+Stopped : entry / ?
+Stopped : exit / ?
+}
+
+' Main flows
+Initialization --> PreOperational : Initialization Complete
+
+PreOperational --> Operational : Start
+Operational --> PreOperational : Enter_PreOperational
+
+PreOperational --> Stopped : Stop
+Stopped --> PreOperational : Enter_PreOperational
+
+Operational --> Stopped : Stop
+Stopped --> Operational : Start
+
+' Reset paths cleanly fanned out
+PreOperational -left-> Initialization : Reset == True
+Operational -up-> Initialization : Reset == True
+Stopped -right-> Initialization : Reset == True
+
+@enduml

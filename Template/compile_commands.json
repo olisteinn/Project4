@@ -1,0 +1,80 @@
+[
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/Initialization.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/Initialization.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/Initialization.cpp",
+        "output": ".pio/build/nanoatmega328new/src/Initialization.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/Operational.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/Operational.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/Operational.cpp",
+        "output": ".pio/build/nanoatmega328new/src/Operational.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/PI_controller.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/PI_controller.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/PI_controller.cpp",
+        "output": ".pio/build/nanoatmega328new/src/PI_controller.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/P_controller.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/P_controller.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/P_controller.cpp",
+        "output": ".pio/build/nanoatmega328new/src/P_controller.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/PreOperational.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/PreOperational.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/PreOperational.cpp",
+        "output": ".pio/build/nanoatmega328new/src/PreOperational.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/StopState.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/StopState.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/StopState.cpp",
+        "output": ".pio/build/nanoatmega328new/src/StopState.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/context.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/context.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/context.cpp",
+        "output": ".pio/build/nanoatmega328new/src/context.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/drive.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/drive.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/drive.cpp",
+        "output": ".pio/build/nanoatmega328new/src/drive.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/encoder.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/encoder.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/encoder.cpp",
+        "output": ".pio/build/nanoatmega328new/src/encoder.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/fault_handling.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/fault_handling.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/fault_handling.cpp",
+        "output": ".pio/build/nanoatmega328new/src/fault_handling.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/main.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/main.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/main.cpp",
+        "output": ".pio/build/nanoatmega328new/src/main.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/timer.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/timer.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/timer.cpp",
+        "output": ".pio/build/nanoatmega328new/src/timer.o"
+    },
+    {
+        "command": "/home/oli/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/nanoatmega328new/src/uart.o -c -Wno-error=narrowing -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega328p -Os -Wall -ffunction-sections -fdata-sections -flto -DF_CPU=16000000L -DPLATFORMIO=60200 -DARDUINO_AVR_NANO -Iinclude -Isrc src/uart.cpp",
+        "directory": "/home/oli/Desktop/VSCodium_container/Project3/Project3/Part_1",
+        "file": "src/uart.cpp",
+        "output": ".pio/build/nanoatmega328new/src/uart.o"
+    }
+]

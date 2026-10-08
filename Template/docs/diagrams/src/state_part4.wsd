@@ -1,0 +1,51 @@
+@startuml state_machine
+skinparam defaultTextAlignment center
+skinparam ArrowColor #333333
+skinparam StateBackgroundColor LightSkyBlue
+skinparam StateBorderColor Navy
+skinparam Padding 15
+
+
+[*] --> Initialization
+
+state Initialization {
+Initialization : entry / initialize parameters,\n    set default Kp, Ti and P controller
+Initialization : exit / send Boot-up message
+}
+
+state Operational {
+Operational : entry / LED on, wake motor driver
+Operational : do / run speed controller
+Operational : exit / stop motor, LED off
+}
+
+state Stopped {
+    Stopped : entry / Stop motor
+    Stopped : do / LED blink at 2 Hz
+    Stopped : exit / LED off
+}
+
+state PreOperational{
+    PreOperational : entry / Stop motor
+    PreOperational : do / LED blink at 1 Hz, configure controller
+    PreOperational : exit / LED off
+}
+
+Initialization --> PreOperational
+
+PreOperational --> Initialization : reset ('r')
+PreOperational --> Stopped : fault\n(FLT pin or 's')
+PreOperational --> Operational : operate ('o')
+
+Operational --> Initialization : reset ('r')
+Operational --> Stopped : fault\n(FLT pin or 's')
+Operational --> PreOperational : pre operate ('p')
+
+Stopped --> Operational : operate ('o')
+Stopped --> Initialization : reset ('r')
+Stopped --> PreOperational : pre operate ('p')
+
+
+
+
+@enduml
