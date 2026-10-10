@@ -14,8 +14,8 @@
 
     motor_pwm {
         compatible = "pwm-leds";
-        ain1: ain1 { pwms = <&pwm2 1 PWM_USEC(50) PWM_POLARITY_NORMAL>; }; // A0
-        ain2: ain2 { pwms = <&pwm2 2 PWM_USEC(50) PWM_POLARITY_NORMAL>; };  // A1
+        ain1: ain1 { pwms = <&pwm2 1 PWM_USEC(1024) PWM_POLARITY_NORMAL>; }; // A0, 1024 to match project 3 977Hz
+        ain2: ain2 { pwms = <&pwm2 2 PWM_USEC(1024) PWM_POLARITY_NORMAL>; };  // A1
     };
 
     aliases {
