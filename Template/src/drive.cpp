@@ -1,6 +1,9 @@
 #include "drive.h"
 #include <zephyr/sys/printk.h>
 
+static const struct pwm_dt_spec ain1 = PWM_DT_SPEC_GET(DT_ALIAS(ain1));
+static const struct pwm_dt_spec ain2 = PWM_DT_SPEC_GET(DT_ALIAS(ain2));
+
 Drive::Drive(uint8_t Pslp_arg) : Pslp(Pslp_arg) {
     Pfwd = &ain1;
     Prev = &ain2;

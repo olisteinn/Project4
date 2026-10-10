@@ -1,4 +1,6 @@
 #include <zephyr/kernel.h>
 
-void main(void)
-{}
+int main(void)
+{
+    return 0;
+}

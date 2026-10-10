@@ -1,6 +1,5 @@
 #include "encoder.h"
 #include "timer.h"
-#include <avr/interrupt.h>
 #include <stdint.h>
 #include <string.h>
 

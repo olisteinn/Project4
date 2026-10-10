@@ -6,7 +6,6 @@
 #include "drive.h"
 #include "digital_out.h"
 #include "timer.h"
-#include <avr/interrupt.h>
 #include "Fault_handling.h"
 #include "PreOperational.h"
 #include "P_controller.h"

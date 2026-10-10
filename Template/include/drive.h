@@ -8,7 +8,7 @@ class Drive {
     private:
         const struct pwm_dt_spec *Pfwd;
         const struct pwm_dt_spec *Prev;
-        Digital_out Pslp(SLP);
+        Digital_out Pslp;
         void set_duty(const struct pwm_dt_spec *ch, uint8_t duty);
     public:
         Drive(uint8_t Pslp_arg);
