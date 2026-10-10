@@ -5,10 +5,11 @@
 #include <string.h>
 
 extern Encoder motor;
+static const struct gpio_dt_spec c1spec = GPIO_DT_SPEC_GET(DT_ALIAS(c1), gpios);
 
-ISR(INT0_vect) {  // D2 interrupt, INT0 activated by digital_in through encoder class
-    motor.update(); // reads position and timestamps on encoder in pin interrupt
-  }
+void c1_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
+    motor.position();
+}
 
 Encoder::Encoder(int pin1, int pin2, int pin_out) 
   : P1(pin1), P2(pin2), Pout(pin_out) 
@@ -16,6 +17,9 @@ Encoder::Encoder(int pin1, int pin2, int pin_out)
 }
 
 void Encoder::init() {
+    gpio_pin_interrupt_configure_dt(&c1spec, GPIO_INT_EDGE_RISING);
+    gpio_init_callback(&cb_data, c1_isr, BIT(c1spec.pin));
+    gpio_add_callback(c1spec.port, &cb_data);
     P1.init();
     P2.init();
     Pout.init();
@@ -66,24 +70,19 @@ bool Encoder::direction() {
 }
 
 int16_t Encoder::position() {
-    cli();
     int16_t val = ext_counter;
-    sei();
     return val;
 }
 
 int16_t Encoder::speed() {
-    cli();
     uint8_t head = history_head;
     uint8_t tail = head + 1;
     if (tail >= history_length) {
         tail = 0;
     }
-     //stoppa interrupts til að copya >8 bit vals
         uint32_t new_time = enc_memory[head].timestamps;
         uint32_t old_time = enc_memory[tail].timestamps;
         int8_t delta_pos = enc_memory[head].counter_mem - enc_memory[tail].counter_mem;
-    sei();
     if ((time_mus() - new_time) > timeout) {
         rpm = 0;
         return rpm;
