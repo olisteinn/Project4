@@ -13,6 +13,11 @@ static const struct gpio_dt_spec fault_pin = GPIO_DT_SPEC_GET(DT_ALIAS(flt), gpi
 /* Callback structure for the GPIO interrupt */
 static struct gpio_callback fault_cb_data;
 
+static void fault_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
+    bridge.sleep();
+    faultFlag = true;
+}
+
 void initFaultPin() {
     // Check if the GPIO controller device is ready
     if (!device_is_ready(fault_pin.port)) {
@@ -45,7 +50,3 @@ bool check_fault(){
     }
 }
 
-static void fault_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-    bridge.sleep();
-    faultFlag = true;
-}

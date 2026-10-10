@@ -10,6 +10,10 @@ uint8_t loop1_cnt=0;
 uint16_t loop2_ms=0;
 uint16_t loop2_cnt=0;
 
+static void timer_expiry_cb(struct k_timer *timer);
+K_TIMER_DEFINE(tick_timer, timer_expiry_cb, NULL);    // creates the timer object
+
+
 void time_init() {
     ms = 0;
     loop1_cnt = 0;
@@ -26,10 +30,9 @@ uint32_t time_ms() {
     return ms;
 }
 uint32_t time_mus() {
-    // Replaces raw TCNT1 register math by combining ms with Zephyr cycle counts
-    uint32_t current_ms = ms;
-    uint32_t us_in_ms = k_cyc_to_us_floor32(k_cycle_get_32()) % 1000;
-    return (current_ms * 1000UL) + us_in_ms;
+    return (uint32_t)k_cyc_to_us_floor64(k_cycle_get_64()); 
+    //k_cycle_get_64 returns the number of cpu clock cycles since boot (in 64bit number)
+    // k_cyc_to_us_floor64 converts cycles to microseconds
 }
 
 void set_loop_ms(uint8_t loop1_arg, uint16_t loop2_arg) {
