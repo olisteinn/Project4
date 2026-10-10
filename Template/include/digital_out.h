@@ -1,69 +1,55 @@
 #pragma once
-#include <stdint.h>
-#include <avr/io.h>
+#include <zephyr/drivers/gpio.h>
 
-// allt nokkuð sjálfsagt
-// mjög líkt og digital in
-// .set_hi() .set_lo() og .toggle() til að nota
 
-#define D0 0
-#define D1 1
-#define D2 2
-#define D3 3
-#define D4 4
-#define D5 5
-#define D6 6
-#define D7 7
-#define D8 8
-#define D9 9
-#define D10 10
-#define D11 11
-#define D12 12
-#define D13 13
+#define SLP 1
+#define LED 2
+#define ENC_OUT 3
 
-#define A0 14
-#define A1 15
-#define A2 16
-#define A3 17
-#define A4 18
-#define A5 19
 
 class Digital_out {
     private:
-        uint8_t pinMask;
-        volatile uint8_t *ddrReg;
-        volatile uint8_t *portReg;
+        struct gpio_dt_spec dt_spec;
+        bool valid = true;
     public:
         Digital_out(int pin) {
-            if (pin <= 7) {
-                pinMask = (1<< pin);
-                ddrReg = &DDRD;
-                portReg = &PORTD;
-            } else if (pin >= 8 && pin <= 13) {
-                pinMask = (1<< (pin-8));
-                ddrReg = &DDRB;
-                portReg = &PORTB;
-            } else if (pin >= 14 && pin <= 19) {
-                pinMask = (1<< (pin-14));
-                ddrReg = &DDRC;
-                portReg = &PORTC;
-            }   
+            switch (pin)
+            {
+            case SLP:{
+                dt_spec = GPIO_DT_SPEC_GET(DT_ALIAS(slp), gpios);
+                break;
+            }
+            case LED:{
+                dt_spec = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
+                break;
+            }
+            case ENC_OUT:{
+                dt_spec = GPIO_DT_SPEC_GET(DT_ALIAS(enc_out), gpios);
+                break;
+            }
+            default:
+                valid = false;
+                return;
+            }
         }
 
         void init() {
-            *ddrReg |= pinMask;
-            *portReg &= ~pinMask;
+            if (!valid || !gpio_is_ready_dt(&dt_spec)){
+                printk("ERROR: GPIO not ready or invalid pin \n");
+                return;
+            }
+            gpio_pin_configure_dt(&dt_spec, GPIO_OUTPUT_INACTIVE);
         }
 
         void set_hi() {
-            *portReg |= pinMask;
+            gpio_pin_set_dt(&dt_spec, 1);
         }
 
         void set_lo() {
-            *portReg &= ~pinMask;
+            gpio_pin_set_dt(&dt_spec, 0);
         }
 
         void toggle() {
-            *portReg ^= pinMask;
+            gpio_pin_toggle_dt(&dt_spec);
         }
 };
