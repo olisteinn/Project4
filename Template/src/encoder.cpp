@@ -7,7 +7,7 @@ extern Encoder motor;
 static const struct gpio_dt_spec c1spec = GPIO_DT_SPEC_GET(DT_ALIAS(c1), gpios);
 
 void c1_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-    motor.position();
+    motor.update();
 }
 
 Encoder::Encoder(int pin1, int pin2, int pin_out) 
@@ -16,20 +16,21 @@ Encoder::Encoder(int pin1, int pin2, int pin_out)
 }
 
 void Encoder::init() {
-    gpio_pin_interrupt_configure_dt(&c1spec, GPIO_INT_EDGE_RISING);
-    gpio_init_callback(&cb_data, c1_isr, BIT(c1spec.pin));
-    gpio_add_callback(c1spec.port, &cb_data);
     P1.init();
     P2.init();
     Pout.init();
     P1prevstate = P1.is_hi();
-    
+
     counter = 0;
     ext_counter = 0;
     dir = true;
     rpm = 0;
     history_head = 0;
     memset(enc_memory, 0, sizeof(enc_memory));
+
+    gpio_init_callback(&cb_data, c1_isr, BIT(c1spec.pin));
+    gpio_add_callback(c1spec.port, &cb_data);
+    gpio_pin_interrupt_configure_dt(&c1spec, GPIO_INT_EDGE_BOTH);
 }
 
 void Encoder::update() {
@@ -69,11 +70,14 @@ bool Encoder::direction() {
 }
 
 int16_t Encoder::position() {
+    unsigned int key = irq_lock();
     int16_t val = ext_counter;
+    irq_unlock(key);
     return val;
 }
 
 int16_t Encoder::speed() {
+    unsigned int key = irq_lock();
     uint8_t head = history_head;
     uint8_t tail = head + 1;
     if (tail >= history_length) {
@@ -82,6 +86,8 @@ int16_t Encoder::speed() {
         uint32_t new_time = enc_memory[head].timestamps;
         uint32_t old_time = enc_memory[tail].timestamps;
         int8_t delta_pos = enc_memory[head].counter_mem - enc_memory[tail].counter_mem;
+    irq_unlock(key);
+    
     if ((time_mus() - new_time) > timeout) {
         rpm = 0;
         return rpm;
