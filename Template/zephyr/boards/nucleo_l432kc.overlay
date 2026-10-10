@@ -9,6 +9,7 @@
     motor_outputs {
         compatible = "gpio-leds";
         motor_slp: motor_slp { gpios = <&gpiob 1 GPIO_ACTIVE_HIGH>; };  // D6
+        enc_out: enc_out { gpios = <&gpioa 8 GPIO_ACTIVE_HIGH>; };   // D9
     };
 
     motor_pwm {
@@ -20,6 +21,7 @@
     aliases {
         c1 = &enc_c1;       // C1 on encoder
         c2 = &enc_c2;       // C2 on encoder
+        enc-out = &enc_out; // Output of encoder for testing
         flt = &motor_flt;   // fault pin on motor driver
         slp = &motor_slp;   // sleep pin on motor driver
         ain1 = &ain1;       // motor driver input 1
@@ -31,8 +33,8 @@
 
 &timers2 {
     status = "okay";
-    st,prescaler = <79>;
-    
+    st,prescaler = <0>;
+
     pwm2: pwm {
         status = "okay";
         pinctrl-0 = <&tim2_ch1_pa0 &tim2_ch2_pa1>;   // A0, A1
