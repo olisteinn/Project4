@@ -1,7 +1,4 @@
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/can.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "digital_in.h"
@@ -18,6 +15,8 @@
 #include "StopState.h"
 #include "PI_controller.h"
 #include "PreOperational.h"
+#include "canopen.h"
+#include "can_bus.h"
 
 
 
@@ -48,12 +47,21 @@ controller* ctrl = &Pctrl;
 
 int main(void) {
   serial_init();
+  if (!can_bus_init()) {
+    return 0;
+  }
   
   Context ctx(&init_state);
   motor_state = &ctx;
   char c[10];
   
   while (true) {
+
+    CanMsg msg;
+    while (can_bus_receive(msg)) {
+      canopen_handle(msg);
+    }
+
     if (serial_available()) {
       serial_read_string(c,10);
       serial_print("\r\n");

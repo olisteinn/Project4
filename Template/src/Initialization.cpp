@@ -10,6 +10,7 @@
 #include "PreOperational.h"
 #include "P_controller.h"
 #include "PI_controller.h"
+#include "canopen.h"
 
 
 extern Encoder motor;
@@ -51,7 +52,7 @@ void Initialization::on_entry()
   ctrl   = &Pctrl;           
 
   irq_unlock(key);
-  serial_println("Initialization complete");
+  canopen_send_bootup();
   this->context_->transition_to(&pre_op_state);
 }
 
