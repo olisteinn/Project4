@@ -97,7 +97,23 @@ int main(void) {
         printk(" %02X", rx.data[i]);
       }
       printk("\n");
-    }
+      
+      if (rx.id == 0x000 && rx.dlc >= 2) {
+        uint8_t command = rx.data[0];
+        uint8_t node    = rx.data[1];
+  
+        if (node == 1 || node == 0) { // for motor controller (node = 1) or for everyone (node = 0)
+          switch (command) {
+            case 0x01: motor_state->on_operate();     break;
+            case 0x02: motor_state->on_fault();       break;
+            case 0x80: motor_state->on_pre_operate(); break;
+            case 0x81: motor_state->reset();          break;
+            case 0x82: motor_state->reset();          break;
+            default:   printk("Unknown NMT command 0x%02X\n", command);
+            }
+          }
+        }
+      }
 
 
 
