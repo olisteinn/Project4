@@ -1,7 +1,8 @@
-#include "encoder.h"
-#include "timer.h"
+#include <zephyr/kernel.h>
 #include <stdint.h>
 #include <string.h>
+#include "encoder.h"
+#include "timer.h"
 
 extern Encoder motor;
 static const struct gpio_dt_spec c1spec = GPIO_DT_SPEC_GET(DT_ALIAS(c1), gpios);
@@ -11,9 +12,7 @@ void c1_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
 }
 
 Encoder::Encoder(int pin1, int pin2, int pin_out) 
-  : P1(pin1), P2(pin2), Pout(pin_out) 
-{
-}
+  : P1(pin1), P2(pin2), Pout(pin_out) {}
 
 void Encoder::init() {
     P1.init();
