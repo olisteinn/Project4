@@ -1,4 +1,6 @@
 #include "can_class.h"
+#include <chrono>
+#include <cstdio>
 
 canbus_obj::canbus_obj(std::string bus) {
     socket_internal = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -23,6 +25,74 @@ canbus_obj::~canbus_obj() {
 
 }
 
+// Throw away frames that piled up in the socket while we weren't reading
+// (TPDO1 arrives every 20 ms), so the next read gets a fresh reply.
+void canbus_obj::flush_rx() {
+    struct can_frame msg;
+    while (recv(socket_internal, &msg, sizeof(msg), MSG_DONTWAIT) > 0) {}
+}
+
+// Read until a frame with the given id arrives, or 1 s has passed.
+// Other frames (e.g. TPDO1) are skipped. For SDO replies the index must
+// match the request, so a reply to an earlier request is not mistaken for this one.
+bool canbus_obj::wait_for(canid_t id, struct can_frame &msg, std::uint16_t index) {
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (read(socket_internal, &msg, sizeof(struct can_frame)) < 0) {
+            return false; // socket timeout, nothing on the bus
+        }
+        if (msg.can_id != id) continue;
+        if (id == 0x581 && (msg.data[1] | (msg.data[2] << 8)) != index) continue;
+        return true;
+    }
+    return false;
+}
+
+// Turn the 4 data bytes of an SDO reply into readable text, by object type.
+// The Pi is little-endian like CANopen, so memcpy gives the right value.
+static std::string sdo_value_to_string(std::uint16_t index, const std::uint8_t *d) {
+    std::uint32_t raw;
+    std::memcpy(&raw, d, 4);
+    char buf[32];
+    switch (index) {
+        case 0x1000:
+            std::snprintf(buf, sizeof(buf), "0x%08X", (unsigned)raw);
+            return buf;
+        case 0x2000:
+            return (d[0] == 1) ? "PI" : "P";
+        case 0x2001:
+        case 0x2002: {
+            float f;
+            std::memcpy(&f, d, 4); // REAL32
+            std::snprintf(buf, sizeof(buf), "%.5f", f);
+            return buf;
+        }
+        case 0x2010: {
+            std::int16_t v;
+            std::memcpy(&v, d, 2); // INTEGER16, 0.1 %
+            std::snprintf(buf, sizeof(buf), "%.1f %%", v * 0.1f);
+            return buf;
+        }
+        case 0x606C:
+        case 0x60FF:
+            return std::to_string((std::int32_t)raw) + " RPM";
+        case 0x6083:
+        case 0x6084:
+            return std::to_string(raw) + " RPM/s";
+    }
+    return std::to_string(raw);
+}
+
+static std::string abort_to_string(const std::uint8_t *d) {
+    std::uint32_t code;
+    std::memcpy(&code, d, 4);
+    if (code == 0x06020000) return "failed, object does not exist";
+    if (code == 0x08000022) return "failed due to current state";
+    char buf[48];
+    std::snprintf(buf, sizeof(buf), "failed, abort code 0x%08X", (unsigned)code);
+    return buf;
+}
+
 void canbus_obj::NMT(char selection) {
     struct can_frame msg{};
     msg.can_id  = 0x000;
@@ -42,7 +112,7 @@ void canbus_obj::NMT(char selection) {
     write(socket_internal, &msg, sizeof(struct can_frame));
 }
 
-void canbus_obj::SDO(std::uint16_t address, float value_arg) {
+std::string canbus_obj::SDO(std::uint16_t address, float value_arg) {
     struct can_frame msg{};
     msg.can_id  = 0x601;
     msg.can_dlc = 8;
@@ -65,7 +135,35 @@ void canbus_obj::SDO(std::uint16_t address, float value_arg) {
         std::memcpy(&msg.data[4], &value, 4);
     }
 
+    flush_rx();
     write(socket_internal, &msg, sizeof(struct can_frame));
+
+    struct can_frame resp{};
+    if (!wait_for(0x581, resp, address)) {
+        return "No reply (value rejected, read-only object, or node stopped)";
+    }
+    if (resp.data[0] == 0x60) return "Write successful";
+    if (resp.data[0] == 0x80) return "Write " + abort_to_string(&resp.data[4]);
+    return "Unexpected reply";
+}
+
+std::string canbus_obj::SDO_read(std::uint16_t address) {
+    struct can_frame msg{};
+    msg.can_id  = 0x601;
+    msg.can_dlc = 8;
+    msg.data[0] = 0x40; // upload request (read)
+    std::memcpy(&msg.data[1], &address, 2); // index, little-endian
+    msg.data[3] = 0x00; // sub-index
+
+    flush_rx();
+    write(socket_internal, &msg, sizeof(struct can_frame));
+
+    struct can_frame resp{};
+    if (!wait_for(0x581, resp, address)) {
+        return "No reply (node stopped or not connected)";
+    }
+    if (resp.data[0] == 0x80) return "Read " + abort_to_string(&resp.data[4]);
+    return sdo_value_to_string(address, &resp.data[4]);
 }
 
 void canbus_obj::PDO(float value_arg) {
@@ -76,6 +174,20 @@ void canbus_obj::PDO(float value_arg) {
     std::memcpy(&msg.data[0], &value, 4);
 
     write(socket_internal, &msg, sizeof(struct can_frame));
+}
+
+std::string canbus_obj::TPDO_read(void) {
+    struct can_frame msg{};
+    if (!wait_for(0x181, msg)) {
+        return "No TPDO1 (node not operational?)";
+    }
+    std::int32_t speed;
+    std::int16_t duty;
+    std::memcpy(&speed, &msg.data[0], 4);
+    std::memcpy(&duty, &msg.data[4], 2);
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), "Velocity: %4d RPM   Duty: %6.1f %%", (int)speed, duty * 0.1f);
+    return buf;
 }
 
 std::string canbus_obj::CAN_read(void) {

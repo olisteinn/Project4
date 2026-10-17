@@ -3,6 +3,16 @@
 #include "can_class.h"
 #include <cstdlib>
 #include <csignal>
+#include <map>
+#include <poll.h>
+
+// Names that can be used with "get"
+static const std::map<std::string, std::uint16_t> objects = {
+    {"device", 0x1000}, {"type",   0x2000}, {"kp",  0x2001}, {"ti",  0x2002},
+    {"duty",   0x2010}, {"speed",  0x606C}, {"acc", 0x6083}, {"dec", 0x6084},
+    {"target", 0x60FF},
+};
+
 void sigint_handler(int) {
     std::cout << "\n";
     close(STDIN_FILENO);
@@ -29,6 +39,12 @@ int main(int argc, char** argv) {
             ti_ptr->add_option("ti_value",parms_value,"Kp value");
     CLI::App* speed_ptr = app.add_subcommand("speed","Set target speed through PDO");
         speed_ptr->add_option("target_speed",speed_value,"Target speed as float");
+    std::string get_object;
+    CLI::App* get_ptr = app.add_subcommand("get","Read a value from the node through SDO");
+        get_ptr->add_option("object",get_object,"device, type, kp, ti, duty, speed, acc, dec, target, all, or a hex address");
+    int listen_count = 0;
+    CLI::App* listen_ptr = app.add_subcommand("listen","Print TPDO1 frames (velocity and duty) until Enter is pressed");
+        listen_ptr->add_option("count",listen_count,"Stop after this many frames instead");
 
     std::string cmd = "sudo ip link set " + bus_name + " up type can bitrate " + bitrate + " 2>/dev/null";
     std::system(cmd.c_str());
@@ -49,6 +65,7 @@ int main(int argc, char** argv) {
         if (line == "exit" || line == "quit") {
             break;
         }
+        listen_count = 0; // "listen" without a count runs until Enter
         try {
             app.clear();
             app.parse(line, false);
@@ -64,13 +81,44 @@ int main(int argc, char** argv) {
             } else if (*ti_ptr) {
                 parms_address = 0x2002;
             }
-            active_bus.SDO(parms_address,parms_value);
-            std::string response = active_bus.CAN_read();
-            std::cout << response << "\n";
+            std::cout << active_bus.SDO(parms_address,parms_value) << "\n";
         } else if (*speed_ptr) {
-            active_bus.PDO(speed_value);
-            std::string response = active_bus.CAN_read();
-            std::cout << response << "\n";
+            active_bus.PDO(speed_value); // RPDO1 has no reply, use "listen" to see the result
+        } else if (*get_ptr) {
+            if (get_object == "all") {
+                for (const auto &o : objects) {
+                    std::cout << o.first << ": " << active_bus.SDO_read(o.second) << "\n";
+                }
+            } else if (objects.count(get_object)) {
+                std::cout << active_bus.SDO_read(objects.at(get_object)) << "\n";
+            } else {
+                try {
+                    std::uint16_t addr = std::stoul(get_object, nullptr, 0); // e.g. 0x2001
+                    std::cout << active_bus.SDO_read(addr) << "\n";
+                } catch (...) {
+                    std::cout << "Unknown object: " << get_object << "\n";
+                }
+            }
+        } else if (*listen_ptr) {
+            // Without a count: print every TPDO1 until Enter is pressed.
+            // With a count: print that many frames.
+            if (listen_count <= 0) {
+                std::cout << "Listening to TPDO1, press Enter to stop\n";
+            }
+            for (int i = 0; listen_count <= 0 || i < listen_count; i++) {
+                std::string frame = active_bus.TPDO_read();
+                std::cout << frame << "\n";
+                if (frame.rfind("No TPDO1", 0) == 0) {
+                    break; // node not operational, nothing to listen to
+                }
+                struct pollfd in = {STDIN_FILENO, POLLIN, 0};
+                if (poll(&in, 1, 0) > 0) { // Enter pressed (or stdin closed by Ctrl-C)
+                    if (in.revents & POLLIN) {
+                        std::getline(std::cin, line); // consume the Enter
+                    }
+                    break;
+                }
+            }
         }
     }
     return 0;
