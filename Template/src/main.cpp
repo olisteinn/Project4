@@ -70,6 +70,10 @@ int main()
     LOG_ERR("Failed to start control task");
     return -1;
   }
+  if (!canopen_tpdo_task_start()) {
+    LOG_ERR("Failed to start CANopen TPDO task");
+    return -1;
+  }
   if (!status_task_start()) {
     LOG_ERR("Failed to start status task");
     return -1;

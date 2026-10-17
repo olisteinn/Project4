@@ -5,7 +5,6 @@
 #include "app_interface.h"
 #include "drive.h"
 #include "encoder.h"
-#include "canopen.h"
 #include "setpoint_generator.h"
 
 extern Encoder motor;
@@ -13,10 +12,14 @@ extern Drive bridge;
 
 K_SEM_DEFINE(control_tick, 0, 1);
 K_MUTEX_DEFINE(telemetry_mutex);
+K_MSGQ_DEFINE(tpdo_snapshot_queue, sizeof(ControlTelemetry), 16,
+              alignof(ControlTelemetry));
 
 static atomic_t control_enabled = ATOMIC_INIT(0);
 static atomic_t fault_stop_pending = ATOMIC_INIT(0);
 static atomic_t target_reference = ATOMIC_INIT(5000);
+static atomic_t coalesced_ticks = ATOMIC_INIT(0);
+static atomic_t tpdo_queue_drops = ATOMIC_INIT(0);
 static ControlTelemetry telemetry = {};
 
 static K_THREAD_STACK_DEFINE(control_stack, 2048);
@@ -28,6 +31,9 @@ static constexpr uint16_t kTpdo1EveryUpdates = 20;
 
 static void control_timer_expired(struct k_timer *)
 {
+  if (k_sem_count_get(&control_tick) != 0) {
+    atomic_inc(&coalesced_ticks);
+  }
   k_sem_give(&control_tick);
 }
 
@@ -51,6 +57,8 @@ static void control_thread_entry(void *, void *, void *)
       continue;
     }
 
+    motor.toggle_timing_probe();
+
     if (!motor_enabled) {
       bridge.wake();
       motor_enabled = true;
@@ -70,7 +78,10 @@ static void control_thread_entry(void *, void *, void *)
 
     if (++updates_in_operational >= kTpdo1EveryUpdates) {
       updates_in_operational = 0;
-      canopen_send_tpdo1();
+      const ControlTelemetry snapshot = {actual, output};
+      if (k_msgq_put(&tpdo_snapshot_queue, &snapshot, K_NO_WAIT) != 0) {
+        atomic_inc(&tpdo_queue_drops);
+      }
     }
   }
 }
@@ -123,4 +134,19 @@ ControlTelemetry control_get_telemetry()
   snapshot = telemetry;
   k_mutex_unlock(&telemetry_mutex);
   return snapshot;
+}
+
+bool control_wait_for_tpdo_snapshot(ControlTelemetry &snapshot)
+{
+  return k_msgq_get(&tpdo_snapshot_queue, &snapshot, K_FOREVER) == 0;
+}
+
+uint32_t control_get_coalesced_ticks()
+{
+  return static_cast<uint32_t>(atomic_get(&coalesced_ticks));
+}
+
+uint32_t control_get_tpdo_queue_drops()
+{
+  return static_cast<uint32_t>(atomic_get(&tpdo_queue_drops));
 }

@@ -6,6 +6,8 @@ Context::Context(State *state) : state_(nullptr)
   this->transition_to(state);
 }
 
+Context::~Context() = default;
+
 void Context::transition_to(State *state)
 {
   if (this->state_ != nullptr)
