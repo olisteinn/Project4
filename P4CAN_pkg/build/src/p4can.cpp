@@ -63,6 +63,7 @@ int main(int argc, char** argv) {
                 parms_address = 0x2002;
             }
             active_bus.SDO(parms_address,parms_value);
+            active_bus.read()M
         } else if (*speed_ptr) {
             active_bus.PDO(speed_value);
         }

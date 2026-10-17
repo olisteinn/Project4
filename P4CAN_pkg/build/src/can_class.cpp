@@ -13,6 +13,15 @@ canbus_obj::canbus_obj(std::string bus) {
     }
 }
 
+canbus_obj::~canbus_obj() {
+    NMT('p'); // pre operational
+    SDO(0x60FF,0); // target speed = 0
+    close(socket_internal);
+    struct timeval tv{};
+    tv.tv_sec = 1; // timeout í sekúndum
+    setsockopt(socket_internal, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));  
+}
+
 void canbus_obj::NMT(char selection) {
     struct can_frame msg{};
     msg.can_id  = 0x000;
@@ -68,8 +77,32 @@ void canbus_obj::PDO(float value_arg) {
     write(socket_internal, &msg, sizeof(struct can_frame));
 }
 
-canbus_obj::~canbus_obj() {
-    NMT('p'); // pre operational
-    SDO(0x60FF,0); // target speed = 0
-    close(socket_internal);
+std::string canbus_obj::CAN_read(void) {
+    std::string outp;
+    struct can_frame msg{};
+    if (read(socket_internal, &msg, sizeof(struct can_frame)) < 0) {
+        outp = "Read timeout";
+    }
+    if (msg.can_id == 0x701) {
+        outp = "Boot successful";
+    } else if (msg.can_id == 0x581) { // SDO
+        if (msg.data[0] == 0x60) {
+            outp = "Write successful";
+        } else if (msg.data[0] == 0x80) {
+            uint32_t abort_code = 0;
+            std::memcpy(&abort_code, &msg.data[4], 4);
+            if (abort_code == 0x06020000) {
+                outp = "Write failed, object does not exist";
+            } else if (abort_code == 0x08000022) {
+                outp = "Write failed due to current state";
+            }
+        }
+    } else if (msg.can_id == 0x181) {
+        int32_t true_speed = 0;
+        int16_t dutycycle = 0;
+        std::memcpy(&true_speed, &msg.data[0], 4);
+        std::memcpy(&dutycycle, &msg.data[4], 2);
+        outp = "Velocity: " + std::to_string(true_speed) + " RPM, Duty: " + std::to_string(dutycycle * 0.1f) + "%";
+    }
+    return outp;
 }

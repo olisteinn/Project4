@@ -18,4 +18,5 @@ class canbus_obj {
         void NMT(char selection);
         void SDO(std::uint16_t address, float value_arg);
         void PDO(float value_arg);
+        std::string CAN_read(void);
 };
