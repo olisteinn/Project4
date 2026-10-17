@@ -1,6 +1,7 @@
 #include <Initialization.h>
 #include <Operational.h>
 #include <Context.h>
+#include "PreOperational.h"
 #include "StopState.h"
 #include "control_task.h"
 #include "status_task.h"

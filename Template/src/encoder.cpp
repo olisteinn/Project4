@@ -64,6 +64,10 @@ void Encoder::update() {
     }
 }
 
+void Encoder::toggle_timing_probe() {
+    Pout.toggle();
+}
+
 bool Encoder::direction() {
     return dir;
 }

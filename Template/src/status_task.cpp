@@ -2,6 +2,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
+#include "control_task.h"
+#include "can_bus.h"
 #include "digital_out.h"
 #include "status_task.h"
 #include "app_interface.h"
@@ -53,10 +55,17 @@ static void status_thread_entry(void *, void *, void *)
         }
         break;
       case StatusMode::Operational: {
-        LOG_INF("target=%d actual=%d output=%d",
-                app_get_target_speed(),
-                app_get_actual_speed(),
-                app_get_duty());
+        if (elapsed_ms >= 1000) {
+          elapsed_ms = 0;
+          LOG_INF("target=%d actual=%d output=%d rx_frames=%u "
+                  "coalesced_ticks=%u tpdo_drops=%u",
+                  app_get_target_speed(),
+                  app_get_actual_speed(),
+                  app_get_duty(),
+                  can_bus_get_rx_frames(),
+                  control_get_coalesced_ticks(),
+                  control_get_tpdo_queue_drops());
+        }
         break;
       }
       case StatusMode::Stopped:
