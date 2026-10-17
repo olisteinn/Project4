@@ -1,6 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/can.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 #include "can_bus.h"
 
 LOG_MODULE_REGISTER(can_bus, LOG_LEVEL_INF);
@@ -9,6 +10,7 @@ LOG_MODULE_REGISTER(can_bus, LOG_LEVEL_INF);
 CAN_MSGQ_DEFINE(rx_msgq, 10);  // queue for can that can hold 10 messages 
 K_MSGQ_DEFINE(tx_msgq, sizeof(CanMsg), 16, alignof(CanMsg));
 static const struct device *dev = DEVICE_DT_GET(CANBUS_NODE);
+static atomic_t rx_frames = ATOMIC_INIT(0);
 static K_THREAD_STACK_DEFINE(tx_thread_stack, 1024);
 static struct k_thread tx_thread;
 
@@ -77,12 +79,18 @@ bool can_bus_receive_wait(CanMsg &msg)
     return false;
   }
 
+  atomic_inc(&rx_frames);
   msg.id  = frame.id;   // writes to the message what was in mailbox
   msg.dlc = frame.dlc;
   for (int i = 0; i < frame.dlc; i++) {
     msg.data[i] = frame.data[i];
   }
   return true;
+}
+
+uint32_t can_bus_get_rx_frames()
+{
+  return static_cast<uint32_t>(atomic_get(&rx_frames));
 }
 
 bool can_bus_send(const CanMsg &msg)

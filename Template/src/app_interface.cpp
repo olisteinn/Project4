@@ -99,7 +99,7 @@ bool app_set_kp(float kp)
 
   k_mutex_lock(&app_config_mutex, K_FOREVER);
   if (ctrl == &PIctrl) {
-    if ((256.0 * kp / Ti_inp) > INT16_MAX) {
+    if ((256.0 * static_cast<double>(kp) / Ti_inp) > INT16_MAX) {
       k_mutex_unlock(&app_config_mutex);
       return false;
     }
@@ -128,7 +128,7 @@ bool app_set_ti(float ti)
   }
 
   k_mutex_lock(&app_config_mutex, K_FOREVER);
-  if ((256.0 * Kp_inp_PI / ti) > INT16_MAX) {
+  if ((256.0 * Kp_inp_PI / static_cast<double>(ti)) > INT16_MAX) {
     k_mutex_unlock(&app_config_mutex);
     return false;
   }
