@@ -13,3 +13,4 @@ struct CanMsg {
 bool can_bus_init(); //initialize the canbus
 bool can_bus_receive_wait(CanMsg &msg); // wait until a message is available
 bool can_bus_send(const CanMsg &msg); // true if sent
+bool can_bus_send_async(const CanMsg &msg); // queue a frame for background transmission

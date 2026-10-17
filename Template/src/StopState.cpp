@@ -4,6 +4,8 @@
 #include "Operational.h"
 #include "PreOperational.h"
 #include "status_task.h"
+#include "control_task.h"
+#include "app_interface.h"
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(stop_state, LOG_LEVEL_INF);
@@ -11,6 +13,8 @@ LOG_MODULE_REGISTER(stop_state, LOG_LEVEL_INF);
 void StopState::on_entry()
 {
   LOG_INF("Stopped");
+  app_set_nmt_state(AppNmtState::Stopped);
+  control_set_enabled(false);
   status_task_set_mode(StatusMode::Stopped);
 }
 

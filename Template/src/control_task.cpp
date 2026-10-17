@@ -2,13 +2,14 @@
 #include <zephyr/sys/atomic.h>
 
 #include "control_task.h"
-#include "controller.h"
+#include "app_interface.h"
 #include "drive.h"
 #include "encoder.h"
+#include "canopen.h"
+#include "setpoint_generator.h"
 
 extern Encoder motor;
 extern Drive bridge;
-extern controller *ctrl;
 
 K_SEM_DEFINE(control_tick, 0, 1);
 K_MUTEX_DEFINE(telemetry_mutex);
@@ -21,6 +22,9 @@ static ControlTelemetry telemetry = {};
 static K_THREAD_STACK_DEFINE(control_stack, 2048);
 static struct k_thread control_thread;
 static struct k_timer control_timer;
+static SetpointGenerator setpoint;
+static constexpr uint32_t kControlPeriodMs = 5;
+static constexpr uint16_t kTpdo1EveryUpdates = 20;
 
 static void control_timer_expired(struct k_timer *)
 {
@@ -30,11 +34,13 @@ static void control_timer_expired(struct k_timer *)
 static void control_thread_entry(void *, void *, void *)
 {
   bool motor_enabled = false;
+  uint16_t updates_in_operational = 0;
 
   while (true) {
     k_sem_take(&control_tick, K_FOREVER);
 
     if (atomic_get(&control_enabled) == 0) {
+      updates_in_operational = 0;
       if (atomic_cas(&fault_stop_pending, 1, 0)) {
         bridge.sleep();
         motor_enabled = false;
@@ -51,14 +57,21 @@ static void control_thread_entry(void *, void *, void *)
     }
 
     const int16_t actual = motor.speed();
-    const int16_t output = ctrl->update(
-        static_cast<int16_t>(atomic_get(&target_reference)), actual);
+    const int16_t reference = setpoint.update(
+        static_cast<int16_t>(atomic_get(&target_reference)),
+        app_get_accel_limit(), app_get_dec_limit(), kControlPeriodMs);
+    const int16_t output = app_controller_update(reference, actual);
     bridge.run(output);
 
     k_mutex_lock(&telemetry_mutex, K_FOREVER);
     telemetry.actual_speed = actual;
     telemetry.output = output;
     k_mutex_unlock(&telemetry_mutex);
+
+    if (++updates_in_operational >= kTpdo1EveryUpdates) {
+      updates_in_operational = 0;
+      canopen_send_tpdo1();
+    }
   }
 }
 
@@ -73,7 +86,8 @@ bool control_task_start()
   }
 
   k_timer_init(&control_timer, control_timer_expired, nullptr);
-  k_timer_start(&control_timer, K_MSEC(5), K_MSEC(5));
+  k_timer_start(&control_timer, K_MSEC(kControlPeriodMs),
+                K_MSEC(kControlPeriodMs));
   return true;
 }
 

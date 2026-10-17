@@ -2,9 +2,9 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
-#include "control_task.h"
 #include "digital_out.h"
 #include "status_task.h"
+#include "app_interface.h"
 
 LOG_MODULE_REGISTER(status, LOG_LEVEL_INF);
 
@@ -53,11 +53,10 @@ static void status_thread_entry(void *, void *, void *)
         }
         break;
       case StatusMode::Operational: {
-        const ControlTelemetry telemetry = control_get_telemetry();
         LOG_INF("target=%d actual=%d output=%d",
-                control_get_target_speed(),
-                telemetry.actual_speed,
-                telemetry.output);
+                app_get_target_speed(),
+                app_get_actual_speed(),
+                app_get_duty());
         break;
       }
       case StatusMode::Stopped:
