@@ -1,6 +1,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/can.h>
+#include <zephyr/logging/log.h>
 #include "can_bus.h"
+
+LOG_MODULE_REGISTER(can_bus, LOG_LEVEL_INF);
 
 #define CANBUS_NODE DT_CHOSEN(zephyr_canbus)
 CAN_MSGQ_DEFINE(rx_msgq, 10);  // queue for can that can hold 10 messages 
@@ -20,21 +23,21 @@ bool can_bus_init()
 {
     if (!device_is_ready(dev))
     {
-        printk("CAN device not ready\n");
+        LOG_ERR("CAN device not ready");
         return false;
     }
         
     int err = can_set_bitrate(dev, 125000);
     if (err != 0)
     {
-        printk("Error setting CAN bitrate (err %d)\n", err);
+        LOG_ERR("Failed to set CAN bitrate (%d)", err);
         return false;
     }
     
     err = can_start(dev);
     if (err != 0)
     {
-        printk("Error starting CAN controller (err %d)\n", err);
+        LOG_ERR("Failed to start CAN controller (%d)", err);
         return false;
     }
   
@@ -45,11 +48,12 @@ bool can_bus_init()
     return true;
 }
 
-bool can_bus_receive(CanMsg &msg)
+bool can_bus_receive_wait(CanMsg &msg)
 {
   struct can_frame frame;
-  if (k_msgq_get(&rx_msgq, &frame, K_NO_WAIT) != 0) {
-    return false;  // mailbox empty
+  if (k_msgq_get(&rx_msgq, &frame, K_FOREVER) != 0) {
+    LOG_ERR("Failed waiting for CAN receive queue");
+    return false;
   }
 
   msg.id  = frame.id;   // writes to the message what was in mailbox
@@ -71,7 +75,7 @@ bool can_bus_send(const CanMsg &msg)
 
     int err = can_send(dev, &frame, K_MSEC(100), NULL, NULL);
     if (err != 0){
-        printk("CAN send failed\n");
+        LOG_ERR("CAN send failed (%d)", err);
         return false;
     }
     return true;
