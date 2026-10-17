@@ -5,4 +5,5 @@
 
 
 void canopen_handle(const CanMsg &msg);  // act on arrieved message
+void canopen_process_pending_nmt();
 void canopen_send_bootup();

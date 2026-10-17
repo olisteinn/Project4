@@ -13,8 +13,6 @@ public:
 
   void transition_to(State *state);
 
-  void do_work();
-
   void reset();
 
   void on_operate();
@@ -22,10 +20,6 @@ public:
   void on_pre_operate();
 
   void on_fault();
-
-  void controller_selector(char* inp);
-
-  void set_parameters(char* inp);
 
   State *get_state() const; 
 

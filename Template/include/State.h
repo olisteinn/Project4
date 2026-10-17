@@ -18,8 +18,6 @@ public:
     this->context_ = context;
   }
 
-  virtual void on_do() = 0;
-
   virtual void on_entry() = 0;
 
   virtual void on_exit() = 0;
@@ -32,8 +30,4 @@ public:
 
   virtual void on_fault() = 0;
 
-  virtual void controller_selector(char* inp) {};
-
-  virtual void set_parameters(char* inp) {};
-
-}; 
+};

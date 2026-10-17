@@ -1,17 +1,18 @@
-#include "uart.h"
 #include <Initialization.h>
 #include <Operational.h>
 #include <Context.h>
 #include "encoder.h"
 #include "drive.h"
 #include "digital_out.h"
-#include "timer.h"
 #include "Fault_handling.h"
 #include "PreOperational.h"
 #include "P_controller.h"
 #include "PI_controller.h"
 #include "canopen.h"
+#include <zephyr/logging/log.h>
+#include "status_task.h"
 
+LOG_MODULE_REGISTER(initialization, LOG_LEVEL_INF);
 
 extern Encoder motor;
 extern Drive bridge;
@@ -28,22 +29,16 @@ extern P_controller Pctrl;
 extern PI_controller PIctrl;
 extern controller* ctrl;
 
-void Initialization::on_do()
-{
-
-}
-
 void Initialization::on_entry()
 {
-  serial_println("Initialization");
-  unsigned int key = irq_lock(); 
-  time_init(); // initalize timer 1 for time tracking use
+  LOG_INF("Initialization");
+  status_task_set_mode(StatusMode::Initializing);
   motor.init();  // initalize encoder
   bridge.init();  // initalize motor driver
-  set_loop_ms(5,20); // sets loop durations in ms, one for controller loop other for serial print
   led.init();
   initFaultPin();
 
+  unsigned int key = irq_lock();
   Pctrl  = P_controller(Kp_init_P);
   PIctrl = PI_controller(Kp_init_PI, Ti_init_PI);
   Kp_inp_P  = Kp_init_P;
@@ -58,8 +53,7 @@ void Initialization::on_entry()
 
 void Initialization::on_exit()
 {
-  serial_println("Boot up complete");
-  serial_print("Initialization -> ");
+  LOG_INF("Boot up complete");
 }
 
 void Initialization::reset()
@@ -80,5 +74,3 @@ void Initialization::on_pre_operate()
 void Initialization::on_fault()
 {
 }
-
-

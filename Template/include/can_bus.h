@@ -11,5 +11,5 @@ struct CanMsg {
 };
 
 bool can_bus_init(); //initialize the canbus
-bool can_bus_receive(CanMsg &msg); // true if message was waiting
+bool can_bus_receive_wait(CanMsg &msg); // wait until a message is available
 bool can_bus_send(const CanMsg &msg); // true if sent
