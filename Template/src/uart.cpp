@@ -1,34 +1,20 @@
 #include "uart.h"
-#include <avr/io.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/sys/printk.h>
 
-#define F_CPU 16000000UL
-#define BAUD 9600
-#define BRC ((F_CPU / 16 / BAUD) - 1)
+static const struct device *const uart_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+static int peeked = -1;   // one-character buffer, -1 = empty
 
 void serial_init(void) {
-    // 1. Set the Baud Rate
-    // UBRR0 is a 16-bit register split into High (H) and Low (L) bytes.
-    UBRR0H = (BRC >> 8); 
-    UBRR0L = BRC;
-
-    // 2. Enable the Transmitter (TXEN0) and Receiver (RXEN0)
-    // This physically connects pins 0 and 1 to the USART hardware.
-    UCSR0B = (1 << TXEN0) | (1 << RXEN0);
-
-    // 3. Set Frame Format: 8 data bits, 1 stop bit, no parity
-    // UCSZ01 and UCSZ00 configure the character size to 8 bits.
-    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+    if (!device_is_ready(uart_dev)) {
+            printk("Console UART not ready\n");
+        }
 }
 
 void serial_print_char(char c) {
-    // Wait for the Transmit Buffer to be empty.
-    // The UDRE0 (USART Data Register Empty) bit goes to 1 when it's safe to write.
-    while (!(UCSR0A & (1 << UDRE0))) {
-        // Do nothing until the buffer clears
-    }
-    
-    // Put the character into the data register. The hardware immediately sends it.
-    UDR0 = c;
+    uart_poll_out(uart_dev, c); // waits until the UART can take the byte, then sends it
 }
 
 void serial_print(const char* str) {
@@ -46,16 +32,22 @@ void serial_println(const char* str) {
 }
 
 uint8_t serial_available(void) {
-    // RXC0 (Receive Complete) is 1 when an unread byte is in UDR0.
-    return (UCSR0A & (1 << RXC0)) ? 1 : 0;
+    if (peeked >= 0) return 1;           // already have one waiting
+    unsigned char c;
+    if (uart_poll_in(uart_dev, &c) == 0) {   // 0 = got a byte, -1 = nothing there
+        peeked = c;
+        return 1;
+    }
+    return 0;
 }
 
 char serial_read(void) {
-    // Wait until data is available to be read
-    while (!(UCSR0A & (1 << RXC0))) {
-        // Do nothing until a character arrives
+    while (!serial_available()) {
+        k_yield();  // let other threads run while waiting
     }
-    return UDR0;
+    char c = (char)peeked;
+    peeked = -1;
+    return c;
 }
 
 void serial_read_string(char* buffer, uint8_t max_length) {
@@ -75,9 +67,8 @@ void serial_read_string(char* buffer, uint8_t max_length) {
     buffer[index] = '\0'; 
 }
 
-void serial_flush() {
-    // Keep reading and throwing away characters as long as there is unread data
-    while (UCSR0A & (1 << RXC0)) {
-        char dummy = UDR0; 
-    }
+void serial_flush(void) {
+    unsigned char c;
+    peeked = -1;
+    while (uart_poll_in(uart_dev, &c) == 0) { }   // throw away anything waiting
 }

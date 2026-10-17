@@ -1,0 +1,44 @@
+/ {
+    motor_inputs {
+        compatible = "gpio-keys";
+        enc_c1: enc_c1 { gpios = <&gpiob 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>; };   // D12
+        enc_c2: enc_c2 { gpios = <&gpiob 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>; };   // D11
+        motor_flt: motor_flt { gpios = <&gpiob 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; };  // D3
+    };
+
+    motor_outputs {
+        compatible = "gpio-leds";
+        motor_slp: motor_slp { gpios = <&gpiob 1 GPIO_ACTIVE_HIGH>; };  // D6
+        enc_out: enc_out { gpios = <&gpioa 8 GPIO_ACTIVE_HIGH>; };   // D9
+    };
+
+    motor_pwm {
+        compatible = "pwm-leds";
+        ain1: ain1 { pwms = <&pwm2 1 PWM_USEC(1024) PWM_POLARITY_NORMAL>; }; // A0, 1024 to match project 3 977Hz
+        ain2: ain2 { pwms = <&pwm2 2 PWM_USEC(1024) PWM_POLARITY_NORMAL>; };  // A1
+    };
+
+    aliases {
+        c1 = &enc_c1;       // C1 on encoder
+        c2 = &enc_c2;       // C2 on encoder
+        enc-out = &enc_out; // Output of encoder for testing
+        flt = &motor_flt;   // fault pin on motor driver
+        slp = &motor_slp;   // sleep pin on motor driver
+        ain1 = &ain1;       // motor driver input 1
+        ain2 = &ain2;       // motor driver input 2
+        // led0 is defined by default
+    };
+};
+
+
+&timers2 {
+    status = "okay";
+    st,prescaler = <0>;
+
+    pwm2: pwm {
+        status = "okay";
+        pinctrl-0 = <&tim2_ch1_pa0 &tim2_ch2_pa1>;   // A0, A1
+        pinctrl-names = "default";
+    };
+};
+
