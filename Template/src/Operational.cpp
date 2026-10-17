@@ -12,6 +12,7 @@
 #include "timer.h"
 #include "StopState.h"
 #include "PreOperational.h"
+#include "canopen.h"
 
 extern Digital_out led;
 extern Drive bridge;
@@ -43,12 +44,13 @@ void Operational::on_do()
   }
   if (loop2 == true) {
     loop2 = false;
-    sprintf(speed_str,"%4d.%2d",currspeed/100,abs(currspeed)%100);
-    sprintf(print_str,"\rTarget speed: %4d.%1d rpm    True speed: %s rpm    PWM: %3d    ",
-      target_speed/100,abs(target_speed)%100,speed_str, ctrlOP>>7);
+    canopen_send_tpdo1();
+    //sprintf(speed_str,"%4d.%2d",currspeed/100,abs(currspeed)%100);
+    //sprintf(print_str,"\rTarget speed: %4d.%1d rpm    True speed: %s rpm    PWM: %3d    ",
+    //  target_speed/100,abs(target_speed)%100,speed_str, ctrlOP>>7);
     // sprintf(print_str,"\r%6lu, %4d.%1d, %s, %3d",
     //   time_ms(),target_speed/100,abs(target_speed)%100,speed_str, ctrlOP>>7);
-    serial_print(print_str);
+    //serial_print(print_str);
   }
   // if (loop2 == true) {
   //   loop2 = false;
