@@ -11,15 +11,16 @@ canbus_obj::canbus_obj(std::string bus) {
     if (bind(socket_internal, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
         perror("CAN socket bind failed");
     }
+    struct timeval tv{};
+    tv.tv_sec = 1; // timeout í sekúndum
+    setsockopt(socket_internal, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));  
 }
 
 canbus_obj::~canbus_obj() {
     NMT('p'); // pre operational
     SDO(0x60FF,0); // target speed = 0
     close(socket_internal);
-    struct timeval tv{};
-    tv.tv_sec = 1; // timeout í sekúndum
-    setsockopt(socket_internal, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));  
+
 }
 
 void canbus_obj::NMT(char selection) {
@@ -82,6 +83,7 @@ std::string canbus_obj::CAN_read(void) {
     struct can_frame msg{};
     if (read(socket_internal, &msg, sizeof(struct can_frame)) < 0) {
         outp = "Read timeout";
+        return outp;
     }
     if (msg.can_id == 0x701) {
         outp = "Boot successful";

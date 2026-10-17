@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
     std::string cmd = "sudo ip link set " + bus_name + " up type can bitrate " + bitrate + " 2>/dev/null";
     std::system(cmd.c_str());
     canbus_obj active_bus(bus_name);
+    std::string response = active_bus.CAN_read();
+    std::cout << response << "\n";
     
     std::string line;
     while (true) {
@@ -63,9 +65,12 @@ int main(int argc, char** argv) {
                 parms_address = 0x2002;
             }
             active_bus.SDO(parms_address,parms_value);
-            active_bus.read()M
+            std::string response = active_bus.CAN_read();
+            std::cout << response << "\n";
         } else if (*speed_ptr) {
             active_bus.PDO(speed_value);
+            std::string response = active_bus.CAN_read();
+            std::cout << response << "\n";
         }
     }
     return 0;
