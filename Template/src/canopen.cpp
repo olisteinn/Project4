@@ -43,6 +43,20 @@ static const OdEntry *od_find(uint16_t index)
   return nullptr;  // object does not exist
 }
 
+static uint32_t float_to_u32(float f)
+{
+  uint32_t u;
+  memcpy(&u, &f, 4);
+  return u;
+}
+
+static float u32_to_float(uint32_t u)
+{
+  float f;
+  memcpy(&f, &u, 4);
+  return f;
+}
+
 static uint32_t od_read(uint16_t index)
 {
   switch (index) {
@@ -117,19 +131,6 @@ static void put_i16_le(uint8_t *d, int16_t value)
   d[1] = (v >> 8) & 0xFF;
 }
 
-static uint32_t float_to_u32(float f)
-{
-  uint32_t u;
-  memcpy(&u, &f, 4);
-  return u;
-}
-
-static float u32_to_float(uint32_t u)
-{
-  float f;
-  memcpy(&f, &u, 4);
-  return f;
-}
 
 static void sdo_send(uint8_t cmd, uint16_t index, uint8_t sub, uint32_t data)
 {
