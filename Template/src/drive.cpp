@@ -1,5 +1,7 @@
 #include "drive.h"
-#include <zephyr/sys/printk.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(drive, LOG_LEVEL_INF);
 
 static const struct pwm_dt_spec ain1 = PWM_DT_SPEC_GET(DT_ALIAS(ain1));
 static const struct pwm_dt_spec ain2 = PWM_DT_SPEC_GET(DT_ALIAS(ain2));
@@ -17,7 +19,7 @@ void Drive::set_duty(const struct pwm_dt_spec *ch, uint8_t duty) {
 void Drive::init() {
     Pslp.init();
     if (!pwm_is_ready_dt(Pfwd) || !pwm_is_ready_dt(Prev)) {
-        printk("PWM device not ready\n");
+        LOG_ERR("PWM device not ready");
         return;
     }
     stop();
