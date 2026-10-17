@@ -53,7 +53,7 @@ int main(void) {
   
   Context ctx(&init_state);
   motor_state = &ctx;
-  char c[10];
+  //char c[10];
   
   while (true) {
 
