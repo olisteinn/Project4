@@ -59,15 +59,17 @@ void canbus_obj::SDO(std::uint16_t address, float value_arg) {
 }
 
 void canbus_obj::PDO(float value_arg) {
-    int32_t value = value_arg; // Target velocity in RPM (INTEGER32)
+    int32_t value = value_arg;
     struct can_frame msg{};
-    msg.can_id  = 0x201; // RPDO1 COB-ID from table
-    msg.can_dlc = 4;     // 4 bytes for int32_t
-    std::memcpy(&msg.data[0], &value, 4); // Copies all 4 bytes into data[0]..data[3]
+    msg.can_id  = 0x201;
+    msg.can_dlc = 4;
+    std::memcpy(&msg.data[0], &value, 4);
 
     write(socket_internal, &msg, sizeof(struct can_frame));
 }
 
 canbus_obj::~canbus_obj() {
+    NMT('p'); // pre operational
+    SDO(0x60FF,0); // target speed = 0
     close(socket_internal);
 }
