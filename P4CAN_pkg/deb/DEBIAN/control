@@ -1,0 +1,7 @@
+Package: p4can
+Version: 1.1
+Section: custom
+Priority: optional
+Architecture: all
+Maintainer: Ólafur Steinn Jónsson <olafursj23@ru,is>
+Description: Package fyrir raspberry pi-ið sem gerir terminal commands fyrir part 2.2
