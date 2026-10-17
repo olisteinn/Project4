@@ -4,6 +4,7 @@
 #include "Operational.h"
 #include "PreOperational.h"
 #include "StopState.h" 
+#include <string.h>   // memcpy
 
 extern Context *motor_state;
 
@@ -47,8 +48,8 @@ static uint32_t od_read(uint16_t index)
   switch (index) {
     case 0x1000: return DEVICE_TYPE;
     case 0x2000: return app_get_controller_type();
-    case 0x2001: return (uint32_t)(app_get_kp() * 1024.0f + 0.5f);  // +0.5 rounds
-    case 0x2002: return (uint32_t)(app_get_ti() * 1024.0f + 0.5f);
+    case 0x2001: return float_to_u32(app_get_kp());
+    case 0x2002: return float_to_u32(app_get_ti());
     case 0x2010: return (uint16_t)app_get_duty();
     case 0x606C: return (uint32_t)app_get_actual_speed();
     case 0x6083: return app_get_accel_limit();
@@ -62,8 +63,8 @@ static bool od_write(uint16_t index, uint32_t raw)
 {
   switch (index) {
     case 0x2000: return app_set_controller_type((uint8_t)raw);
-    case 0x2001: return app_set_kp(raw / 1024.0f);
-    case 0x2002: return app_set_ti(raw / 1024.0f);
+    case 0x2001: return app_set_kp(u32_to_float(raw));
+    case 0x2002: return app_set_ti(u32_to_float(raw));
     case 0x6083: return app_set_accel_limit(raw);
     case 0x6084: return app_set_dec_limit(raw);
     case 0x60FF: app_set_target_speed((int32_t)raw); return true;
@@ -114,6 +115,20 @@ static void put_i16_le(uint8_t *d, int16_t value)
   uint16_t v = (uint16_t)value;
   d[0] = v & 0xFF;
   d[1] = (v >> 8) & 0xFF;
+}
+
+static uint32_t float_to_u32(float f)
+{
+  uint32_t u;
+  memcpy(&u, &f, 4);
+  return u;
+}
+
+static float u32_to_float(uint32_t u)
+{
+  float f;
+  memcpy(&f, &u, 4);
+  return f;
 }
 
 static void sdo_send(uint8_t cmd, uint16_t index, uint8_t sub, uint32_t data)
