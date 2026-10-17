@@ -1,18 +1,17 @@
 #pragma once
 #include "digital_out.h"
 #include <stdint.h>
+#include <zephyr/drivers/pwm.h>
 
 
 class Drive {
     private:
-        volatile uint8_t *Pfwd;
-        volatile uint8_t *Prev;
-        volatile uint8_t *CTRLreg;
-        uint8_t TN;
+        const struct pwm_dt_spec *Pfwd;
+        const struct pwm_dt_spec *Prev;
         Digital_out Pslp;
-        uint8_t speed;
+        void set_duty(const struct pwm_dt_spec *ch, uint8_t duty);
     public:
-        Drive(uint8_t TN_arg, uint8_t Pslp_arg);
+        Drive(uint8_t Pslp_arg);
         void init(void);
         void fwd(uint8_t speed);
         void rev(uint8_t speed);

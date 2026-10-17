@@ -6,11 +6,11 @@
 #include "drive.h"
 #include "digital_out.h"
 #include "timer.h"
-#include <avr/interrupt.h>
 #include "Fault_handling.h"
 #include "PreOperational.h"
 #include "P_controller.h"
 #include "PI_controller.h"
+#include "canopen.h"
 
 
 extern Encoder motor;
@@ -36,7 +36,7 @@ void Initialization::on_do()
 void Initialization::on_entry()
 {
   serial_println("Initialization");
-  cli();
+  unsigned int key = irq_lock(); 
   time_init(); // initalize timer 1 for time tracking use
   motor.init();  // initalize encoder
   bridge.init();  // initalize motor driver
@@ -51,8 +51,8 @@ void Initialization::on_entry()
   Ti_inp    = Ti_init_PI;
   ctrl   = &Pctrl;           
 
-  sei();
-  serial_println("Initialization complete");
+  irq_unlock(key);
+  canopen_send_bootup();
   this->context_->transition_to(&pre_op_state);
 }
 

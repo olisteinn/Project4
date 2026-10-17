@@ -1,5 +1,5 @@
 #pragma once
-#include <avr/io.h>
+#include <zephyr/drivers/gpio.h>
 #include <stdint.h>
 #include "digital_in.h"
 #include "digital_out.h"
@@ -9,6 +9,7 @@ class Encoder {
         Digital_in P1;
         Digital_in P2;
         Digital_out Pout;
+        struct gpio_callback cb_data;
         volatile int32_t counter; // bara position nema loopar ekki
         const int16_t rev_res = 1050; // Steps í einum hring á mótor
         volatile int16_t ext_counter; // position sem loopar
