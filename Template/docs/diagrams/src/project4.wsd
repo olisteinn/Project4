@@ -1,23 +1,21 @@
 @startuml
 skinparam componentStyle rectangle
 
-package "Nucleo Software & Physical Bus" {
-  node "OSI Layer 7 (Application)" as L7 {
-    [Motor Controller Math (e.g. PI, State Machine)] as MC
-    interface "Clean App. Values (e.g., target_rpm)" as AppVal
-    [CANopen Layer (Translator/Dict)] as CO
-  }
+node "OSI Layer 7 (Application)" as L7 {
+  [Motor Controller Math (e.g. PI, State Machine)] as MC
+  interface "Clean App. Values (e.g., target_rpm)" as AppVal
+  [CANopen Layer (Translator/Dict)] as CO
+}
 
-  interface "Abstraction Barrier\n(No Zephyr calls in CANopen)" as Bar1
+interface "Abstraction Barrier\n(No Zephyr calls in CANopen)" as Bar1
 
-  node "OSI Layer 2 (Data Link)" as L2 {
-    [Zephyr CAN Driver] as ZCanD
-  }
+node "OSI Layer 2 (Data Link)" as L2 {
+  [Zephyr CAN Driver] as ZCanD
+}
 
-  node "OSI Layer 1 (Physical)" as L1 {
-    component [CAN Transceiver] as Trans
-    interface "Physical CAN Bus\n(CAN_H / CAN_L wires)" as PhysBus
-  }
+node "OSI Layer 1 (Physical)" as L1 {
+  component [CAN Transceiver] as Trans
+  interface "Physical CAN Bus\n(CAN_H / CAN_L wires)" as PhysBus
 }
 
 ' Flows
