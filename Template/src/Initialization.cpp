@@ -11,6 +11,7 @@
 #include "canopen.h"
 #include <zephyr/logging/log.h>
 #include "status_task.h"
+#include "app_interface.h"
 
 LOG_MODULE_REGISTER(initialization, LOG_LEVEL_INF);
 
@@ -32,6 +33,7 @@ extern controller* ctrl;
 void Initialization::on_entry()
 {
   LOG_INF("Initialization");
+  app_set_nmt_state(AppNmtState::Initializing);
   status_task_set_mode(StatusMode::Initializing);
   motor.init();  // initalize encoder
   bridge.init();  // initalize motor driver

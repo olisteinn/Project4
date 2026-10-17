@@ -5,6 +5,7 @@
 #include "StopState.h"
 #include "PreOperational.h"
 #include "status_task.h"
+#include "app_interface.h"
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(operational, LOG_LEVEL_INF);
@@ -12,6 +13,7 @@ LOG_MODULE_REGISTER(operational, LOG_LEVEL_INF);
 void Operational::on_entry()
 {
   LOG_INF("Operational");
+  app_set_nmt_state(AppNmtState::Operational);
   control_set_enabled(true);
   status_task_set_mode(StatusMode::Operational);
 }
@@ -19,7 +21,6 @@ void Operational::on_entry()
 void Operational::on_exit()
 {
   control_set_enabled(false);
-  status_task_set_mode(StatusMode::PreOperational);
   LOG_INF("Leaving Operational");
 }
 
