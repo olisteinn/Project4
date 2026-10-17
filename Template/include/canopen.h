@@ -6,3 +6,4 @@
 
 void canopen_handle(const CanMsg &msg);  // act on arrieved message
 void canopen_send_bootup();
+void canopen_send_tpdo1(); // send Velocity actual value, output duty cycle

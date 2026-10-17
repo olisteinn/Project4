@@ -36,6 +36,23 @@ static int32_t get_i32_le(const uint8_t *d)
   return (int32_t)v; //makes it signed
 }
 
+static void put_i32_le(uint8_t *d, int32_t value)
+{
+  uint32_t v = (uint32_t)value;
+  d[0] = v & 0xFF;          // lowest byte first
+  d[1] = (v >> 8)  & 0xFF;
+  d[2] = (v >> 16) & 0xFF;
+  d[3] = (v >> 24) & 0xFF;
+}
+
+static void put_i16_le(uint8_t *d, int16_t value)
+{
+  uint16_t v = (uint16_t)value;
+  d[0] = v & 0xFF;
+  d[1] = (v >> 8) & 0xFF;
+}
+
+
 static void handle_SDO(const CanMsg &msg){
 
 }
@@ -68,5 +85,15 @@ void canopen_send_bootup(){
   msg.id = 0x701;
   msg.dlc = 1;
   msg.data[0] = 0x00; 
+  can_bus_send(msg);
+}
+
+
+void canopen_send_tpdo1(){
+  CanMsg msg = {};
+  msg.id  = 0x181;
+  msg.dlc = 6;
+  put_i32_le(&msg.data[0], app_get_actual_speed());  // bytes 0-3 (int32)
+  put_i16_le(&msg.data[4], app_get_duty());          // bytes 4-5 (int16)
   can_bus_send(msg);
 }
