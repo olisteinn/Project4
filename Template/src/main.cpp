@@ -40,7 +40,7 @@ double Ti_init_PI = 0.08517;  // optimal for PI controller
 double Kp_inp_P   = Kp_init_P;
 double Kp_inp_PI  = Kp_init_PI;
 double Ti_inp     = Ti_init_PI;
-int16_t target_speed = 5000;  // Target speed = rpm*100
+int16_t target_speed = 0;  // Target speed = rpm*100
 P_controller  Pctrl(Kp_init_P);
 PI_controller PIctrl(Kp_init_PI, Ti_init_PI);
 controller* ctrl = &Pctrl;
