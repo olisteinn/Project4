@@ -29,6 +29,7 @@ class Encoder {
         Encoder(int pin1, int pin2, int pin_out); 
         void init();
         void update(); // .update() bara til að lesa af encoder, reiknar hraðann í leiðinni
+        void toggle_timing_probe();
         int16_t position(); // .position() skilar counter, ekki búinn að setja inn þannig að hann resettar eftir hring
         bool direction(); // .direction() skilar "bool dir" sem er true/false
         int16_t speed(); // skilar rpm sem 16-bit int þar sem seinustu tveir stafir eru eftir kommu (skilar 10099 sem þýðir 100.99rpm)

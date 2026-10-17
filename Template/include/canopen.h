@@ -7,4 +7,4 @@
 void canopen_handle(const CanMsg &msg);  // act on arrieved message
 void canopen_process_pending_nmt();
 void canopen_send_bootup();
-void canopen_send_tpdo1();
+bool canopen_tpdo_task_start();
