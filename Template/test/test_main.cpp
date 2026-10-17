@@ -1,32 +1,60 @@
 #include <unity.h>
 
-void test_init(void) {
-    TEST_ASSERT_EQUAL();
+#include "setpoint_generator.h"
+
+void test_acceleration_ramps_and_reaches_target()
+{
+  SetpointGenerator ramp;
+  for (int update = 0; update < 20; ++update) {
+    ramp.update(1000, 100, 100, 5);
+  }
+  TEST_ASSERT_EQUAL_INT16(1000, ramp.reference());
 }
 
-void test_operational(void) {
-    TEST_ASSERT_FALSE();
+void test_deceleration_uses_deceleration_limit()
+{
+  SetpointGenerator ramp(1000);
+  TEST_ASSERT_EQUAL_INT16(900, ramp.update(0, 100, 200, 5));
 }
 
-void test_reset(void) {
-    TEST_ASSERT_TRUE();
+void test_zero_limit_applies_step_immediately()
+{
+  SetpointGenerator ramp(1000);
+  TEST_ASSERT_EQUAL_INT16(-2500, ramp.update(-2500, 0, 0, 5));
 }
 
-void test_fault_detection(void) {
+void test_reversing_ramps_down_through_zero_before_accelerating()
+{
+  SetpointGenerator ramp(1000);
+  TEST_ASSERT_EQUAL_INT16(500, ramp.update(-1000, 1000, 1000, 5));
+  TEST_ASSERT_EQUAL_INT16(0, ramp.update(-1000, 1000, 1000, 5));
+  TEST_ASSERT_EQUAL_INT16(-500, ramp.update(-1000, 1000, 1000, 5));
 }
 
-void test_stopped(void) {
+void test_target_change_during_ramp_moves_toward_new_target()
+{
+  SetpointGenerator ramp;
+  TEST_ASSERT_EQUAL_INT16(50, ramp.update(1000, 100, 100, 5));
+  TEST_ASSERT_EQUAL_INT16(0, ramp.update(-1000, 100, 100, 5));
 }
 
+void test_fractional_step_budget_accumulates()
+{
+  SetpointGenerator ramp;
+  ramp.update(100, 1, 1, 5);
+  TEST_ASSERT_EQUAL_INT16(0, ramp.reference());
+  ramp.update(100, 1, 1, 5);
+  TEST_ASSERT_EQUAL_INT16(1, ramp.reference());
+}
 
-int main() {
-    UNITY_BEGIN();
-
-    RUN_TEST(test_init());
-    RUN_TEST(test_operational());
-    RUN_TEST(test_fault_detection());
-    RUN_TEST(test_stopped());
-    RUN_TEST(test_reset());
-
-    UNITY_END();
+int main()
+{
+  UNITY_BEGIN();
+  RUN_TEST(test_acceleration_ramps_and_reaches_target);
+  RUN_TEST(test_deceleration_uses_deceleration_limit);
+  RUN_TEST(test_zero_limit_applies_step_immediately);
+  RUN_TEST(test_reversing_ramps_down_through_zero_before_accelerating);
+  RUN_TEST(test_target_change_during_ramp_moves_toward_new_target);
+  RUN_TEST(test_fractional_step_budget_accumulates);
+  return UNITY_END();
 }
