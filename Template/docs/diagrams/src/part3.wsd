@@ -1,0 +1,40 @@
+@startuml
+skinparam componentStyle rectangle
+
+node "OSI Layer 7 (Application & RTOS Tasks)" as L7 {
+  [Control Task (Prio 2, 200 Hz)\n(SetpointGenerator, P/PI, Drive, Encoder)] as CtrlTask
+  [Main Task (Prio 5)\n(NMT State Machine & Fault Handler)] as MainTask
+  [Status Task (Prio 6, 50 Hz)\n(LED State & Zephyr LOG_INF)] as StatusTask
+
+  interface "app_interface (Mutex)\n(target_rpm, Kp, Ti, Accel/Decel)" as AppVal
+  interface "state_events (Semaphore)\n(pending_nmt / fault)" as StateEvt
+
+  [CAN Thread (Prio 3) + CANopen Layer\n(NMT, SDO/OD, RPDO1, TPDO1, SYNC, EMCY)] as CO
+}
+
+interface "can_bus Abstraction Barrier (CanMsg)\n(No Zephyr calls in CANopen)" as Bar1
+
+node "OSI Layer 2 (Data Link)" as L2 {
+  [Zephyr CAN Driver\n(rx_msgq + non-blocking can_send)] as ZCanD
+}
+
+node "OSI Layer 1 (Physical)" as L1 {
+  component [CAN Transceiver] as Trans
+  interface "Physical CAN Bus\n(CAN_H / CAN_L wires)" as PhysBus
+}
+
+' Flows
+CtrlTask -down- AppVal : reads/writes
+StatusTask -down- AppVal : reads telemetry
+AppVal -down- CO : SDO / PDO
+
+MainTask -down- StateEvt : waits on
+StateEvt -down- CO : triggers NMT
+MainTask -left-> CtrlTask : enables/disables
+MainTask -right-> StatusTask : sets LED mode
+
+CO -- Bar1
+Bar1 -- ZCanD
+ZCanD -- Trans
+Trans --[#blue,bold,thickness=2] PhysBus : translates to\ndifferential voltage
+@enduml
