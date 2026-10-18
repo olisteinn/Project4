@@ -24,7 +24,7 @@ static struct k_thread control_thread;
 static struct k_timer control_timer;
 static SetpointGenerator setpoint;
 static constexpr uint32_t kControlPeriodMs = 5;
-static constexpr uint16_t kTpdo1EveryUpdates = 20;
+// static constexpr uint16_t kTpdo1EveryUpdates = 20;
 
 static void control_timer_expired(struct k_timer *)
 {
@@ -34,13 +34,13 @@ static void control_timer_expired(struct k_timer *)
 static void control_thread_entry(void *, void *, void *)
 {
   bool motor_enabled = false;
-  uint16_t updates_in_operational = 0;
+  // uint16_t updates_in_operational = 0;
 
   while (true) {
     k_sem_take(&control_tick, K_FOREVER);
 
     if (atomic_get(&control_enabled) == 0) {
-      updates_in_operational = 0;
+      // updates_in_operational = 0;
       if (atomic_cas(&fault_stop_pending, 1, 0)) {
         bridge.sleep();
         motor_enabled = false;
@@ -70,10 +70,10 @@ static void control_thread_entry(void *, void *, void *)
     telemetry.output = output;
     k_mutex_unlock(&telemetry_mutex);
 
-    if (++updates_in_operational >= kTpdo1EveryUpdates) {
-      updates_in_operational = 0;
-      canopen_send_tpdo1();
-    }
+    // if (++updates_in_operational >= kTpdo1EveryUpdates) {
+    //   updates_in_operational = 0;
+    //   canopen_send_tpdo1();
+    // } // tekið út fyrir 3.3 optional SYNC
   }
 }
 

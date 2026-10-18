@@ -168,18 +168,21 @@ void canbus_obj::PDO(float value_arg) {
     write(socket_internal, &msg, sizeof(struct can_frame));
 }
 
-std::string canbus_obj::TPDO_read(void) {
+bool canbus_obj::TPDO_read(std::int32_t &speed, float &duty) {
+    struct can_frame sync{};
+    sync.can_id  = 0x080; // SYNC message
+    sync.can_dlc = 0;
+    write(socket_internal, &sync, sizeof(struct can_frame));
+
     struct can_frame msg{};
     if (!wait_for(0x181, msg)) {
-        return "TPDO1 fail";
+        return false;
     }
-    std::int32_t speed;
-    std::int16_t duty;
+    std::int16_t raw_duty;
     std::memcpy(&speed, &msg.data[0], 4);
-    std::memcpy(&duty, &msg.data[4], 2);
-    char buf[64];
-    std::snprintf(buf, sizeof(buf), "Velocity: %4d RPM   Duty: %6.1f %%", (int)speed, duty * 0.1f);
-    return buf;
+    std::memcpy(&raw_duty, &msg.data[4], 2);
+    duty = raw_duty * 0.1f;
+    return true;
 }
 
 std::string canbus_obj::CAN_read(void) {

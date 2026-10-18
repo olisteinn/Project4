@@ -21,6 +21,6 @@ class canbus_obj {
         std::string SDO(std::uint16_t address, float value_arg);
         std::string SDO_read(std::uint16_t address);
         void PDO(float value_arg);
-        std::string TPDO_read(void);
+        bool TPDO_read(std::int32_t &speed, float &duty);
         std::string CAN_read(void);
 };

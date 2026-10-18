@@ -73,6 +73,7 @@ int main()
     state_event_wait();
     canopen_process_pending_nmt();
     if (check_fault()) {
+      canopen_send_emcy();
       motor_state->on_fault();
     }
   }

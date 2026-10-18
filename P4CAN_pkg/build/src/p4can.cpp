@@ -3,6 +3,8 @@
 #include "can_class.h"
 #include <cstdlib>
 #include <csignal>
+#include <chrono>
+#include <fstream>
 #include <map>
 #include <poll.h>
 
@@ -22,11 +24,12 @@ int main(int argc, char** argv) {
     char state_selector;
     float parms_value;
     std::uint16_t parms_address;
-    float speed_value;
+    float speed_value = 0;
+    float current_target = 50;
     std::string bus_name = (argc > 1) ? argv[1] : "can0";
     std::string bitrate = (argc > 2) ? argv[2] : "125000";
 
-    //Parser:
+    //Parser
     CLI::App* state_ptr = app.add_subcommand("state","Switch motor controller states through NMT");
         state_ptr->add_option("selected_state", state_selector,"p = pre-operational, o = operational, s = stopped, r = reset");
     CLI::App* parms_ptr = app.add_subcommand("parms","Modify setup parameters through SDO");
@@ -75,16 +78,23 @@ int main(int argc, char** argv) {
         }
         if (*state_ptr) {
             active_bus.NMT(state_selector);
-        } else if (*parms_ptr) {
+        }
+        if (*parms_ptr) {
             if (*kp_ptr) {
                 parms_address = 0x2001;
             } else if (*ti_ptr) {
                 parms_address = 0x2002;
             }
+            if (parms_address == 0x60FF) {
+                current_target = parms_value;
+            }
             std::cout << active_bus.SDO(parms_address,parms_value) << "\n";
-        } else if (*speed_ptr) {
+        }
+        if (*speed_ptr) {
+            current_target = speed_value;
             active_bus.PDO(speed_value);
-        } else if (*get_ptr) {
+        }
+        if (*get_ptr) {
             if (get_object == "all") {
                 for (const auto &o : objects) {
                     std::cout << o.first << ": " << active_bus.SDO_read(o.second) << "\n";
@@ -99,24 +109,37 @@ int main(int argc, char** argv) {
                     std::cout << "Unknown object: " << get_object << "\n";
                 }
             }
-        } else if (*listen_ptr) {
+        }
+        if (*listen_ptr) {
+            std::ofstream csv("canlog.csv"); // CSV
+            csv << "time_ms,target_rpm,actual_rpm,duty_pct\n";
+
             if (listen_count <= 0) {
-                std::cout << "Listening to TPDO1, press Enter to stop\n";
+                std::cout << "Logging TPDO1, press Enter to stop\n";
             }
+            auto start_time = std::chrono::steady_clock::now();
+
             for (int i = 0; listen_count <= 0 || i < listen_count; i++) {
-                std::string frame = active_bus.TPDO_read();
-                std::cout << frame << "\n";
-                if (frame.rfind("No TPDO1", 0) == 0) {
+                std::int32_t actual_speed = 0;
+                float duty = 0.0f;
+                if (!active_bus.TPDO_read(actual_speed, duty)) {
+                    std::cout << "TPDO1 fail\n";
                     break;
                 }
+                auto now = std::chrono::steady_clock::now();
+                long time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
+
+                std::cout << "t=" << time_ms << " ms | Velocity: " << actual_speed << " RPM | Duty: " << duty << " %\n"; csv << time_ms << "," << (int)current_target << ","<< actual_speed << "," << duty << "\n";
+
                 struct pollfd in = {STDIN_FILENO, POLLIN, 0};
-                if (poll(&in, 1, 0) > 0) {
+                if (poll(&in, 1, 100) > 0) {
                     if (in.revents & POLLIN) {
                         std::getline(std::cin, line);
                     }
                     break;
                 }
             }
+            std::cout << "Logging complete\n";
         }
     }
     return 0;

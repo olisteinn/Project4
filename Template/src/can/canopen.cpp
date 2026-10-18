@@ -145,6 +145,8 @@ void canopen_handle(const CanMsg &msg)
     handle_sdo(msg);
   } else if (msg.id == 0x201) {
     handle_rpdo1(msg);
+  } else if (msg.id == 0x080 && motor_state->get_state() == &operational_state) {
+    canopen_send_tpdo1();
   }
 }
 
@@ -161,8 +163,7 @@ void canopen_process_pending_nmt()
   }
 }
 
-void canopen_send_bootup()
-{
+void canopen_send_bootup() {
   CanMsg msg = {};
   msg.id = 0x701;
   msg.dlc = 1;
@@ -170,12 +171,21 @@ void canopen_send_bootup()
   can_bus_send(msg);
 }
 
-void canopen_send_tpdo1()
-{
+void canopen_send_tpdo1() {
   CanMsg msg = {};
   msg.id  = 0x181;
   msg.dlc = 6;
   put_u32_le(&msg.data[0], (uint32_t)app_get_actual_speed());
   put_i16_le(&msg.data[4], app_get_duty());
+  can_bus_send(msg);
+}
+
+void canopen_send_emcy() {
+  CanMsg msg = {};
+  msg.id  = 0x081;
+  msg.dlc = 8;
+  msg.data[0] = 0x00;
+  msg.data[1] = 0x10;
+  msg.data[2] = 0x01;
   can_bus_send(msg);
 }

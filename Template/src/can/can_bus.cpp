@@ -35,6 +35,7 @@ bool can_bus_init()
     add_filter(0x000); // NMT
     add_filter(0x601); // SDO request
     add_filter(0x201); // RPDO1
+    add_filter(0x080); // SYNC 3.3 optional
 
     return true;
 }
