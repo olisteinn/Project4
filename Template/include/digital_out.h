@@ -10,7 +10,6 @@
 class Digital_out {
     private:
         struct gpio_dt_spec dt_spec;
-        bool valid = true;
     public:
         Digital_out(int pin);
         void init();

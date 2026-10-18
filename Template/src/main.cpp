@@ -1,5 +1,4 @@
 #include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
 
 #include "digital_in.h"
 #include "digital_out.h"
@@ -19,8 +18,6 @@
 #include "control_task.h"
 #include "state_events.h"
 #include "status_task.h"
-
-LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
 static K_THREAD_STACK_DEFINE(can_thread_stack, 2048);
 static struct k_thread can_thread;
@@ -49,11 +46,9 @@ static void can_thread_entry(void *, void *, void *)
 {
   while (true) {
     CanMsg msg;
-    if (!can_bus_receive_wait(msg)) {
-      LOG_ERR("CAN receive failed");
-      return;
+    if (can_bus_receive_wait(msg)) {
+      canopen_handle(msg);
     }
-    canopen_handle(msg);
   }
 }
 
@@ -66,25 +61,13 @@ int main()
   Context ctx(&init_state);
   motor_state = &ctx;
 
-  if (!control_task_start()) {
-    LOG_ERR("Failed to start control task");
-    return -1;
-  }
-  if (!canopen_tpdo_task_start()) {
-    LOG_ERR("Failed to start CANopen TPDO task");
-    return -1;
-  }
-  if (!status_task_start()) {
-    LOG_ERR("Failed to start status task");
-    return -1;
-  }
-  if (k_thread_create(&can_thread, can_thread_stack,
-                      K_THREAD_STACK_SIZEOF(can_thread_stack),
-                      can_thread_entry, nullptr, nullptr, nullptr,
-                      K_PRIO_PREEMPT(3), 0, K_NO_WAIT) == nullptr) {
-    LOG_ERR("Failed to start CAN thread");
-    return -1;
-  }
+  control_task_start();
+  status_task_start();
+
+  k_thread_create(&can_thread, can_thread_stack,
+                  K_THREAD_STACK_SIZEOF(can_thread_stack),
+                  can_thread_entry, nullptr, nullptr, nullptr,
+                  K_PRIO_PREEMPT(3), 0, K_NO_WAIT);
 
   while (true) {
     state_event_wait();

@@ -47,17 +47,15 @@ void Encoder::update() {
                 dir = false;
             }
             P1prevstate = P1currstate;
-
             history_head++;
             if (history_head >= history_length) {
                 history_head=0;
             }
             enc_memory[history_head].timestamps = time_mus();
             enc_memory[history_head].counter_mem = (int8_t)counter;
-
-        if (ext_counter >= rev_res || -rev_res >= ext_counter) {
-            ext_counter = 0;
-        }
+            if (ext_counter >= rev_res || -rev_res >= ext_counter) {
+                ext_counter = 0;
+            }
         }
     } else {
         P1prevstate = P1currstate;

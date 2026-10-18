@@ -6,14 +6,13 @@
 #include <map>
 #include <poll.h>
 
-// Names that can be used with "get"
-static const std::map<std::string, std::uint16_t> objects = {
+static const std::map<std::string, std::uint16_t> objects = { // get addressur
     {"device", 0x1000}, {"type",   0x2000}, {"kp",  0x2001}, {"ti",  0x2002},
     {"duty",   0x2010}, {"speed",  0x606C}, {"acc", 0x6083}, {"dec", 0x6084},
     {"target", 0x60FF},
 };
 
-void sigint_handler(int) {
+void sigint_handler(int) { // fyrir ctrl+c
     std::cout << "\n";
     close(STDIN_FILENO);
 }
@@ -27,6 +26,7 @@ int main(int argc, char** argv) {
     std::string bus_name = (argc > 1) ? argv[1] : "can0";
     std::string bitrate = (argc > 2) ? argv[2] : "125000";
 
+    //Parser:
     CLI::App* state_ptr = app.add_subcommand("state","Switch motor controller states through NMT");
         state_ptr->add_option("selected_state", state_selector,"p = pre-operational, o = operational, s = stopped, r = reset");
     CLI::App* parms_ptr = app.add_subcommand("parms","Modify setup parameters through SDO");
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     std::string line;
     while (true) {
         std::signal(SIGINT, sigint_handler);
-        std::cout << "[" << bus_name << "]> ";
+        std::cout << "[" << bus_name << "] "; 
         if (!std::getline(std::cin, line)) {
             break;
         }
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
         if (line == "exit" || line == "quit") {
             break;
         }
-        listen_count = 0; // "listen" without a count runs until Enter
+        listen_count = 0;
         try {
             app.clear();
             app.parse(line, false);
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
             }
             std::cout << active_bus.SDO(parms_address,parms_value) << "\n";
         } else if (*speed_ptr) {
-            active_bus.PDO(speed_value); // RPDO1 has no reply, use "listen" to see the result
+            active_bus.PDO(speed_value);
         } else if (*get_ptr) {
             if (get_object == "all") {
                 for (const auto &o : objects) {
@@ -100,8 +100,6 @@ int main(int argc, char** argv) {
                 }
             }
         } else if (*listen_ptr) {
-            // Without a count: print every TPDO1 until Enter is pressed.
-            // With a count: print that many frames.
             if (listen_count <= 0) {
                 std::cout << "Listening to TPDO1, press Enter to stop\n";
             }
@@ -109,12 +107,12 @@ int main(int argc, char** argv) {
                 std::string frame = active_bus.TPDO_read();
                 std::cout << frame << "\n";
                 if (frame.rfind("No TPDO1", 0) == 0) {
-                    break; // node not operational, nothing to listen to
+                    break;
                 }
                 struct pollfd in = {STDIN_FILENO, POLLIN, 0};
-                if (poll(&in, 1, 0) > 0) { // Enter pressed (or stdin closed by Ctrl-C)
+                if (poll(&in, 1, 0) > 0) {
                     if (in.revents & POLLIN) {
-                        std::getline(std::cin, line); // consume the Enter
+                        std::getline(std::cin, line);
                     }
                     break;
                 }

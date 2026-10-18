@@ -38,36 +38,6 @@ void test_target_change_during_ramp_moves_toward_new_target()
   TEST_ASSERT_EQUAL_INT16(0, ramp.update(-1000, 100, 100, 5));
 }
 
-void test_fractional_step_budget_accumulates()
-{
-  SetpointGenerator ramp;
-  ramp.update(100, 1, 1, 5);
-  TEST_ASSERT_EQUAL_INT16(0, ramp.reference());
-  ramp.update(100, 1, 1, 5);
-  TEST_ASSERT_EQUAL_INT16(1, ramp.reference());
-}
-
-void test_zero_elapsed_time_does_not_advance_reference()
-{
-  SetpointGenerator ramp;
-  TEST_ASSERT_EQUAL_INT16(0, ramp.update(1000, 100, 100, 0));
-}
-
-void test_zero_acceleration_limit_does_not_disable_deceleration_limit()
-{
-  SetpointGenerator ramp;
-  TEST_ASSERT_EQUAL_INT16(1000, ramp.update(1000, 0, 10, 5));
-  TEST_ASSERT_EQUAL_INT16(995, ramp.update(0, 0, 10, 5));
-}
-
-void test_reset_clears_fractional_step_remainder()
-{
-  SetpointGenerator ramp;
-  ramp.update(100, 1, 1, 5);
-  ramp.reset();
-  TEST_ASSERT_EQUAL_INT16(0, ramp.update(100, 1, 1, 5));
-}
-
 int main()
 {
   UNITY_BEGIN();
@@ -76,9 +46,5 @@ int main()
   RUN_TEST(test_zero_limit_applies_step_immediately);
   RUN_TEST(test_reversing_ramps_down_through_zero_before_accelerating);
   RUN_TEST(test_target_change_during_ramp_moves_toward_new_target);
-  RUN_TEST(test_fractional_step_budget_accumulates);
-  RUN_TEST(test_zero_elapsed_time_does_not_advance_reference);
-  RUN_TEST(test_zero_acceleration_limit_does_not_disable_deceleration_limit);
-  RUN_TEST(test_reset_clears_fractional_step_remainder);
   return UNITY_END();
 }

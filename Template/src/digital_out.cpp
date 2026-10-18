@@ -1,7 +1,4 @@
 #include "digital_out.h"
-#include <zephyr/logging/log.h>
-
-LOG_MODULE_REGISTER(digital_out, LOG_LEVEL_INF);
 
 Digital_out::Digital_out(int pin)
 {
@@ -16,44 +13,29 @@ Digital_out::Digital_out(int pin)
       dt_spec = GPIO_DT_SPEC_GET(DT_ALIAS(enc_out), gpios);
       break;
     default:
-      valid = false;
       break;
   }
 }
 
 void Digital_out::init()
 {
-  if (!valid || !gpio_is_ready_dt(&dt_spec)) {
-    LOG_ERR("GPIO output is invalid or device is not ready");
+  if (!gpio_is_ready_dt(&dt_spec)) {
     return;
   }
-
-  const int err = gpio_pin_configure_dt(&dt_spec, GPIO_OUTPUT_INACTIVE);
-  if (err != 0) {
-    LOG_ERR("Failed to configure GPIO output (%d)", err);
-  }
+  gpio_pin_configure_dt(&dt_spec, GPIO_OUTPUT_INACTIVE);
 }
 
 void Digital_out::set_hi()
 {
-  const int err = gpio_pin_set_dt(&dt_spec, 1);
-  if (err != 0) {
-    LOG_ERR("Failed to set GPIO high (%d)", err);
-  }
+  gpio_pin_set_dt(&dt_spec, 1);
 }
 
 void Digital_out::set_lo()
 {
-  const int err = gpio_pin_set_dt(&dt_spec, 0);
-  if (err != 0) {
-    LOG_ERR("Failed to set GPIO low (%d)", err);
-  }
+  gpio_pin_set_dt(&dt_spec, 0);
 }
 
 void Digital_out::toggle()
 {
-  const int err = gpio_pin_toggle_dt(&dt_spec);
-  if (err != 0) {
-    LOG_ERR("Failed to toggle GPIO (%d)", err);
-  }
+  gpio_pin_toggle_dt(&dt_spec);
 }

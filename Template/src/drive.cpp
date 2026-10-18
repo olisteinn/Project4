@@ -1,7 +1,4 @@
 #include "drive.h"
-#include <zephyr/logging/log.h>
-
-LOG_MODULE_REGISTER(drive, LOG_LEVEL_INF);
 
 static const struct pwm_dt_spec ain1 = PWM_DT_SPEC_GET(DT_ALIAS(ain1));
 static const struct pwm_dt_spec ain2 = PWM_DT_SPEC_GET(DT_ALIAS(ain2));
@@ -13,13 +10,12 @@ Drive::Drive(uint8_t Pslp_arg) : Pslp(Pslp_arg) {
 
 void Drive::set_duty(const struct pwm_dt_spec *ch, uint8_t duty) {
     uint32_t pulse = (uint32_t)((uint64_t)ch->period * duty / 255);
-    pwm_set_pulse_dt(ch, pulse); // wants pulse width in ns.
+    pwm_set_pulse_dt(ch, pulse);
 }
 
 void Drive::init() {
     Pslp.init();
     if (!pwm_is_ready_dt(Pfwd) || !pwm_is_ready_dt(Prev)) {
-        LOG_ERR("PWM device not ready");
         return;
     }
     stop();

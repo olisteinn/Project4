@@ -14,6 +14,4 @@ class SetpointGenerator {
 
  private:
   int16_t reference_;
-  uint8_t acceleration_remainder_;
-  uint8_t deceleration_remainder_;
 };

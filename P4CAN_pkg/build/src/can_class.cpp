@@ -22,24 +22,18 @@ canbus_obj::~canbus_obj() {
     NMT('p'); // pre operational
     SDO(0x60FF,0); // target speed = 0
     close(socket_internal);
-
 }
 
-// Throw away frames that piled up in the socket while we weren't reading
-// (TPDO1 arrives every 20 ms), so the next read gets a fresh reply.
 void canbus_obj::flush_rx() {
     struct can_frame msg;
     while (recv(socket_internal, &msg, sizeof(msg), MSG_DONTWAIT) > 0) {}
 }
 
-// Read until a frame with the given id arrives, or 1 s has passed.
-// Other frames (e.g. TPDO1) are skipped. For SDO replies the index must
-// match the request, so a reply to an earlier request is not mistaken for this one.
 bool canbus_obj::wait_for(canid_t id, struct can_frame &msg, std::uint16_t index) {
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
     while (std::chrono::steady_clock::now() < deadline) {
         if (read(socket_internal, &msg, sizeof(struct can_frame)) < 0) {
-            return false; // socket timeout, nothing on the bus
+            return false;
         }
         if (msg.can_id != id) continue;
         if (id == 0x581 && (msg.data[1] | (msg.data[2] << 8)) != index) continue;
@@ -48,8 +42,6 @@ bool canbus_obj::wait_for(canid_t id, struct can_frame &msg, std::uint16_t index
     return false;
 }
 
-// Turn the 4 data bytes of an SDO reply into readable text, by object type.
-// The Pi is little-endian like CANopen, so memcpy gives the right value.
 static std::string sdo_value_to_string(std::uint16_t index, const std::uint8_t *d) {
     std::uint32_t raw;
     std::memcpy(&raw, d, 4);
@@ -140,7 +132,7 @@ std::string canbus_obj::SDO(std::uint16_t address, float value_arg) {
 
     struct can_frame resp{};
     if (!wait_for(0x581, resp, address)) {
-        return "No reply (value rejected, read-only object, or node stopped)";
+        return "No reply";
     }
     if (resp.data[0] == 0x60) return "Write successful";
     if (resp.data[0] == 0x80) return "Write " + abort_to_string(&resp.data[4]);
@@ -179,7 +171,7 @@ void canbus_obj::PDO(float value_arg) {
 std::string canbus_obj::TPDO_read(void) {
     struct can_frame msg{};
     if (!wait_for(0x181, msg)) {
-        return "No TPDO1 (node not operational?)";
+        return "TPDO1 fail";
     }
     std::int32_t speed;
     std::int16_t duty;
@@ -191,32 +183,13 @@ std::string canbus_obj::TPDO_read(void) {
 }
 
 std::string canbus_obj::CAN_read(void) {
-    std::string outp;
     struct can_frame msg{};
-    if (read(socket_internal, &msg, sizeof(struct can_frame)) < 0) {
-        outp = "Read timeout";
-        return outp;
+    if (wait_for(0x701, msg)) {
+        return "Boot successful";
     }
-    if (msg.can_id == 0x701) {
-        outp = "Boot successful";
-    } else if (msg.can_id == 0x581) { // SDO
-        if (msg.data[0] == 0x60) {
-            outp = "Write successful";
-        } else if (msg.data[0] == 0x80) {
-            uint32_t abort_code = 0;
-            std::memcpy(&abort_code, &msg.data[4], 4);
-            if (abort_code == 0x06020000) {
-                outp = "Write failed, object does not exist";
-            } else if (abort_code == 0x08000022) {
-                outp = "Write failed due to current state";
-            }
-        }
-    } else if (msg.can_id == 0x181) {
-        int32_t true_speed = 0;
-        int16_t dutycycle = 0;
-        std::memcpy(&true_speed, &msg.data[0], 4);
-        std::memcpy(&dutycycle, &msg.data[4], 2);
-        outp = "Velocity: " + std::to_string(true_speed) + " RPM, Duty: " + std::to_string(dutycycle * 0.1f) + "%";
+    NMT('r');
+    if (wait_for(0x701, msg)) {
+        return "Boot successful";
     }
-    return outp;
+    return "Read timeout";
 }

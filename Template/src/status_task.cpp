@@ -2,8 +2,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
-#include "control_task.h"
-#include "can_bus.h"
 #include "digital_out.h"
 #include "status_task.h"
 #include "app_interface.h"
@@ -14,8 +12,7 @@ extern Digital_out led;
 
 K_SEM_DEFINE(status_tick, 0, 1);
 
-static atomic_t status_mode = ATOMIC_INIT(
-    static_cast<atomic_val_t>(StatusMode::Initializing));
+static atomic_t status_mode = ATOMIC_INIT((atomic_val_t)StatusMode::Initializing);
 static K_THREAD_STACK_DEFINE(status_stack, 1536);
 static struct k_thread status_thread;
 static struct k_timer status_timer;
@@ -32,7 +29,7 @@ static void status_thread_entry(void *, void *, void *)
 
   while (true) {
     k_sem_take(&status_tick, K_FOREVER);
-    const auto mode = static_cast<StatusMode>(atomic_get(&status_mode));
+    StatusMode mode = (StatusMode)atomic_get(&status_mode);
     if (mode != previous_mode) {
       elapsed_ms = 0;
       previous_mode = mode;
@@ -54,20 +51,15 @@ static void status_thread_entry(void *, void *, void *)
           led.toggle();
         }
         break;
-      case StatusMode::Operational: {
+      case StatusMode::Operational:
         if (elapsed_ms >= 1000) {
           elapsed_ms = 0;
-          LOG_INF("target=%d actual=%d output=%d rx_frames=%u "
-                  "coalesced_ticks=%u tpdo_drops=%u",
+          LOG_INF("target=%d actual=%d duty=%d",
                   app_get_target_speed(),
                   app_get_actual_speed(),
-                  app_get_duty(),
-                  can_bus_get_rx_frames(),
-                  control_get_coalesced_ticks(),
-                  control_get_tpdo_queue_drops());
+                  app_get_duty());
         }
         break;
-      }
       case StatusMode::Stopped:
         if (elapsed_ms >= 250) {
           elapsed_ms = 0;
@@ -78,21 +70,18 @@ static void status_thread_entry(void *, void *, void *)
   }
 }
 
-bool status_task_start()
+void status_task_start()
 {
-  if (k_thread_create(&status_thread, status_stack,
-                      K_THREAD_STACK_SIZEOF(status_stack),
-                      status_thread_entry, nullptr, nullptr, nullptr,
-                      K_PRIO_PREEMPT(6), 0, K_NO_WAIT) == nullptr) {
-    return false;
-  }
+  k_thread_create(&status_thread, status_stack,
+    K_THREAD_STACK_SIZEOF(status_stack),
+    status_thread_entry, nullptr, nullptr, nullptr,
+    K_PRIO_PREEMPT(6), 0, K_NO_WAIT);
 
   k_timer_init(&status_timer, status_timer_expired, nullptr);
   k_timer_start(&status_timer, K_MSEC(20), K_MSEC(20));
-  return true;
 }
 
 void status_task_set_mode(StatusMode mode)
 {
-  atomic_set(&status_mode, static_cast<atomic_val_t>(mode));
+  atomic_set(&status_mode, (atomic_val_t)mode);
 }
