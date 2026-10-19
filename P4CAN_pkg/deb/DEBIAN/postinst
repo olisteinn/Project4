@@ -1,0 +1,6 @@
+#!/bin/sh 
+# shell script sem keyrir eftir install til að activatea autostart á boot
+set -e
+systemctl daemon-reload
+systemctl enable p4can.service
+mkdir -p /home/olafursj23/P4CAN

@@ -1,0 +1,26 @@
+[Unit]
+Description=p4can autostart
+After=network.target 
+# bíða þangað til networks eru rdy, þ.s. CAN er network
+Conflicts=getty@tty1.service
+# tty1 login prompt conflict
+[Service]
+ExecStart=/usr/bin/p4can 
+# path á binary til að runna 
+WorkingDirectory=/home/olafursj23/P4CAN
+# keyrir inní þessu dir (postinst gerir mkdir) þannig "listen" savear logs þar
+User=olafursj23
+StandardInput=tty 
+StandardOutput=tty 
+TTYPath=/dev/tty1 
+# tengir I/O við tty1/terminal sem ui
+TTYReset=yes 
+TTYVHangup=yes 
+# hreinsar tty1
+Restart=no
+# daemon restartar ekki ef p4can er lokað
+[Install]
+WantedBy=graphical.target
+# launchar þegar desktop gui er komið
+
+#Desktop er á tty7, skiptir í tty1 með ctrl+alt+f1 og tilbaka með ctrl+alt+f7
